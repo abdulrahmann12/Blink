@@ -9,5 +9,6 @@ public class BlinkApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(BlinkApplication.class, args);
 		System.out.println("App Running Successfully");
+		System.out.println("App Running Successfullysssssssssss");
 	}
 }
