@@ -1,5 +1,6 @@
 package com.example.Blink.url.dto;
 
+import com.example.Blink.common.messages.ValidationMessages;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -15,21 +16,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class CreateUrlRequest {
 
-    @NotBlank(message = "Original URL cannot be blank")
-    @URL(message = "Must be a valid URL")
-    @Size(max = 2048, message = "URL must not exceed 2048 characters")
+    @NotBlank(message = ValidationMessages.URL_NOT_BLANK)
+    @URL(message = ValidationMessages.URL_FORMAT_INVALID)
+    @Size(max = 2048, message = ValidationMessages.URL_TOO_LONG)
     private String originalUrl;
 
     private String title;
 
-    @Size(max = 100, message = "Custom alias must not exceed 100 characters")
+    @Size(max = 100, message = ValidationMessages.ALIAS_TOO_LONG)
     private String customAlias;
-
-    private boolean passwordProtected;
 
     private String password;
 
-    @Future(message = "Expiry date must be in the future")
+    @Future(message = ValidationMessages.EXPIRE_DATE_FUTURE)
     private LocalDateTime expireAt;
 
 }

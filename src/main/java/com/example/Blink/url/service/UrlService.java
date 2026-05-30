@@ -41,7 +41,7 @@ public class UrlService {
     @Transactional
     public UrlResponse generateShortUrl(@Valid CreateUrlRequest request){
 
-        if (!isValidUrl(request.getOriginalUrl())) {
+        if (!checkUrl(request.getOriginalUrl())) {
             throw new InvalidUrlException();
         }
 
@@ -87,6 +87,7 @@ public class UrlService {
         return sb.toString();
     }
 
+    @Transactional
     public String getOriginalUrl(String shortCode) {
         Url url = urlRepository.findByShortUrl(BASE_URL + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
@@ -96,10 +97,12 @@ public class UrlService {
         if (url.isPasswordProtected()) {
             throw new UrlLockedException();
         }
+        urlRepository.incrementClickCount(url.getUrlId());
 
         return url.getOriginalUrl();
     }
 
+    @Transactional
     public String unlockUrl(String shortCode, String password) {
         Url url = urlRepository.findByShortUrl(BASE_URL + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
@@ -110,31 +113,9 @@ public class UrlService {
             throw new WrongPasswordException();
         }
 
+        urlRepository.incrementClickCount(url.getUrlId());
+
         return url.getOriginalUrl();
-    }
-
-    public boolean isValidUrl(String rawUrl) {
-        try {
-            URL url = URI.create(rawUrl).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.setConnectTimeout(3000);
-            connection.setReadTimeout(3000);
-            connection.setInstanceFollowRedirects(true);
-            int responseCode = connection.getResponseCode();
-            return responseCode < 400;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private void validateUrl(Url url) {
-        if (!url.isActive()) {
-            throw new UrlNotActiveException();
-        }
-        if (url.getExpireAt() != null && url.getExpireAt().isBefore(LocalDateTime.now())) {
-            throw new UrlExpiredException();
-        }
     }
 
     public boolean checkUrl(String rawUrl) {
@@ -148,6 +129,15 @@ public class UrlService {
             return connection.getResponseCode() < 400;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private void validateUrl(Url url) {
+        if (!url.isActive()) {
+            throw new UrlNotActiveException();
+        }
+        if (url.getExpireAt() != null && url.getExpireAt().isBefore(LocalDateTime.now())) {
+            throw new UrlExpiredException();
         }
     }
 
