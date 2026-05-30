@@ -65,12 +65,28 @@ public class GlobalExceptionHandler {
 
     // === Business Exceptions === //
 
-    @ExceptionHandler({
-            AliasAlreadyUsed.class,
+    @ExceptionHandler(AliasAlreadyUsed.class)
+    public ResponseEntity<BaseResponse> handleAliasAlreadyUsed(AliasAlreadyUsed ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
+    }
 
+    @ExceptionHandler({
+            UrlNotFoundException.class,
+            UrlNotActiveException.class,
+            UrlExpiredException.class,
     })
-    public ResponseEntity< BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
+    public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UrlLockedException.class)
+    public ResponseEntity<BaseResponse> handleUrlLocked(UrlLockedException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.LOCKED);
+    }
+
+    @ExceptionHandler(WrongPasswordException.class)
+    public ResponseEntity<BaseResponse> handleWrongPassword(WrongPasswordException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.UNAUTHORIZED);
     }
 
 
@@ -88,8 +104,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity< BaseResponse> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+    public ResponseEntity<BaseResponse> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidUrlException.class)
+    public ResponseEntity<BaseResponse> handleInvalidUrl(InvalidUrlException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
 

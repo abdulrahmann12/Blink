@@ -27,7 +27,6 @@ public class CreateUrlRequest {
 
     private boolean passwordProtected;
 
-    @Size(min = 4, message = "Password must be at least 4 characters long")
     private String password;
 
     @Future(message = "Expiry date must be in the future")

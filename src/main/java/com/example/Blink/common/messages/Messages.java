@@ -11,8 +11,11 @@ public class Messages {
     public static final String URL_DELETED = "URL deleted successfully";
     public static final String URL_DEACTIVATED = "URL deactivated successfully";
     public static final String URL_ACTIVATED = "URL activated successfully";
+    public static final String URL_UNLOCKED = "URL unlocked successfully";
+    public static final String URL_STATS = "URL statistics retrieved successfully";
     public static final String URL_EXPIRED = "This URL has expired";
     public static final String URL_INACTIVE = "This URL is inactive";
+    public static final String URL_LOCKED = "This URL is password protected";
     public static final String WRONG_PASSWORD = "Incorrect password";
 
     //========================= Auth =========================
@@ -30,6 +33,9 @@ public class Messages {
     //========================= General =========================
 
     public static final String INVALID_DATA = "Invalid or malformed request body";
+    public static final String INVALID_URL = "The provided URL is not reachable or invalid";
+    public static final String URL_VALID = "URL is valid and reachable";
+    public static final String URL_INVALID = "URL is not reachable or invalid";
     public static final String REQUEST_NOT_SUPPORTED = "HTTP method not supported for this endpoint";
 
 }
