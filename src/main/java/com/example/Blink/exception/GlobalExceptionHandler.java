@@ -33,11 +33,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MailSendingException.class)
-    public ResponseEntity< BaseResponse> handleMailException(MailSendingException ex, HttpServletRequest request) {
-
-         BaseResponse response = new  BaseResponse( ex.getMessage(),request.getRequestURI());
-
+    public ResponseEntity<BaseResponse> handleMailException(MailSendingException ex, HttpServletRequest request) {
+        BaseResponse response = new BaseResponse(ex.getMessage(), request.getRequestURI());
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ImageUploadException.class)
+    public ResponseEntity<BaseResponse> handleImageUpload(ImageUploadException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ImageNullException.class)
+    public ResponseEntity<BaseResponse> handleImageNull(ImageNullException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler({
@@ -75,13 +83,20 @@ public class GlobalExceptionHandler {
             UrlNotActiveException.class,
             UrlExpiredException.class,
             RoleNotFoundException.class,
+            UserNotFoundException.class,
+            UserNotActiveException.class,
     })
     public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(RoleAlreadyExistsException.class)
-    public ResponseEntity<BaseResponse> handleRoleAlreadyExists(RoleAlreadyExistsException ex, WebRequest request) {
+    @ExceptionHandler({
+            EmailAlreadyExistsException.class,
+            UsernameAlreadyExistsException.class,
+            RoleAlreadyExistsException.class,
+            UserAlreadyDeactivatedException.class,
+    })
+    public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
     }
 

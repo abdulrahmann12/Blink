@@ -18,6 +18,21 @@ public class Messages {
     public static final String URL_LOCKED = "This URL is password protected";
     public static final String WRONG_PASSWORD = "Incorrect password";
 
+    //========================= User =========================
+
+    public static final String USER_CREATED = "User created successfully";
+    public static final String USER_UPDATED = "User updated successfully";
+    public static final String USER_DELETED = "User deactivated successfully";
+    public static final String USER_ACTIVATED = "User activated successfully";
+    public static final String USER_FETCHED = "User retrieved successfully";
+    public static final String USERS_FETCHED = "Users retrieved successfully";
+    public static final String PROFILE_PICTURE_UPDATED = "Profile picture updated successfully";
+    public static final String USER_NOT_FOUND = "User not found";
+    public static final String USER_NOT_ACTIVE = "This user account is deactivated";
+    public static final String USER_ALREADY_DEACTIVATED = "This user account is already deactivated";
+    public static final String EMAIL_ALREADY_EXISTS = "Email already exists";
+    public static final String USERNAME_ALREADY_EXISTS = "Username already exists";
+
     //========================= Role =========================
 
     public static final String ROLE_NOT_FOUND = "Role not found";
@@ -39,6 +54,11 @@ public class Messages {
     //========================= Mail =========================
 
     public static final String FAILED_EMAIL = "Failed to send email, please try again later";
+
+    //========================= Image =========================
+
+    public static final String IMAGE_UPLOAD_FAILED = "Failed to upload image, please try again later";
+    public static final String IMAGE_NULL = "Image must not be null or empty";
 
     //========================= General =========================
 

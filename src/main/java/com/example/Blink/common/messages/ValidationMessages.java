@@ -18,6 +18,20 @@ public class ValidationMessages {
 
     public static final String ROLE_NAME_NOT_BLANK = "Role name must not be blank";
 
+    //========================= User =========================
+
+    public static final String USERNAME_NOT_BLANK = "Username is required";
+    public static final String USERNAME_SIZE = "Username must be between 6 and 50 characters";
+    public static final String EMAIL_NOT_BLANK = "Email is required";
+    public static final String EMAIL_INVALID = "Email should be valid";
+    public static final String EMAIL_TOO_LONG = "Email must be less than 100 characters";
+    public static final String FULL_NAME_NOT_BLANK = "Full name is required";
+    public static final String PASSWORD_REQUIRED = "Password is required";
+    public static final String PASSWORD_MIN_SIZE = "Password must be at least 8 characters long";
+    public static final String CURRENT_PASSWORD_REQUIRED = "Current password is required";
+    public static final String NEW_PASSWORD_REQUIRED = "New password is required";
+    public static final String NEW_PASSWORD_MIN_SIZE = "New password must be at least 8 characters long";
+
 
 
 }

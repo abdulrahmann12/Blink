@@ -47,4 +47,42 @@ public class SwaggerMessages {
     public static final String DELETE_ROLE = "Delete Role";
     public static final String DELETE_ROLE_DESC = "Deletes a role by its ID";
 
+    //========================= User Tag =========================
+
+    public static final String TAG_USER = "User";
+    public static final String TAG_USER_DESC = "Endpoints for managing users";
+
+    public static final String CREATE_USER = "Register User";
+    public static final String CREATE_USER_DESC = "Registers a new user with default USER role";
+
+    public static final String UPDATE_USER = "Update User";
+    public static final String UPDATE_USER_DESC = "Updates username, email, fullName and profile info";
+
+    public static final String GET_USER_BY_ID = "Get User By ID";
+    public static final String GET_USER_BY_ID_DESC = "Returns a single active user by their ID";
+
+    public static final String GET_USER_BY_IDENTIFIER = "Get User By Username or Email";
+    public static final String GET_USER_BY_IDENTIFIER_DESC = "Finds an active user by username or email";
+
+    public static final String GET_ALL_USERS = "Get All Users";
+    public static final String GET_ALL_USERS_DESC = "Returns a paginated list of all users";
+
+    public static final String DELETE_USER = "Deactivate User";
+    public static final String DELETE_USER_DESC = "Soft-deletes a user by setting active = false";
+
+    public static final String ACTIVATE_USER = "Activate User";
+    public static final String ACTIVATE_USER_DESC = "Reactivates a previously deactivated user";
+
+    public static final String SEARCH_USERS = "Search Users";
+    public static final String SEARCH_USERS_DESC = "Searches users by username, email, or full name";
+
+    public static final String GET_USERS_BY_ROLE = "Get Users By Role";
+    public static final String GET_USERS_BY_ROLE_DESC = "Returns paginated users filtered by role ID";
+
+    public static final String UPDATE_PROFILE_PICTURE = "Update Profile Picture";
+    public static final String UPDATE_PROFILE_PICTURE_DESC = "Uploads and sets a new profile picture via Cloudinary";
+
+    public static final String GET_DEACTIVATED_USERS = "Get Deactivated Users";
+    public static final String GET_DEACTIVATED_USERS_DESC = "Returns a paginated list of all deactivated users";
+
 }
