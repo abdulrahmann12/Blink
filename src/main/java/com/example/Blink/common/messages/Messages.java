@@ -18,6 +18,16 @@ public class Messages {
     public static final String URL_LOCKED = "This URL is password protected";
     public static final String WRONG_PASSWORD = "Incorrect password";
 
+    //========================= Role =========================
+
+    public static final String ROLE_NOT_FOUND = "Role not found";
+    public static final String ROLE_ALREADY_EXISTS = "Role name already exists";
+    public static final String ROLE_CREATED = "Role created successfully";
+    public static final String ROLE_UPDATED = "Role updated successfully";
+    public static final String ROLE_DELETED = "Role deleted successfully";
+    public static final String ROLE_FETCHED = "Role retrieved successfully";
+    public static final String ROLES_FETCHED = "Roles retrieved successfully";
+
     //========================= Auth =========================
 
     public static final String BAD_CREDENTIALS = "Invalid username or password";

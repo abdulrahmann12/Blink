@@ -74,9 +74,15 @@ public class GlobalExceptionHandler {
             UrlNotFoundException.class,
             UrlNotActiveException.class,
             UrlExpiredException.class,
+            RoleNotFoundException.class,
     })
     public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(RoleAlreadyExistsException.class)
+    public ResponseEntity<BaseResponse> handleRoleAlreadyExists(RoleAlreadyExistsException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(UrlLockedException.class)

@@ -14,4 +14,10 @@ public class ValidationMessages {
 
     public static final String PASSWORD_NOT_BLANK = "Password cannot be blank";
 
+    //========================= Role =========================
+
+    public static final String ROLE_NAME_NOT_BLANK = "Role name must not be blank";
+
+
+
 }
