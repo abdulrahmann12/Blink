@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -24,12 +25,14 @@ public class UrlController {
     private final UrlService urlService;
 
     @Operation(summary = SwaggerMessages.CREATE_SHORT_URL, description = SwaggerMessages.CREATE_SHORT_URL_DESC)
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<BaseResponse> generateShortUrl(@Valid @RequestBody CreateUrlRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new BaseResponse(Messages.URL_CREATED, urlService.generateShortUrl(request)));
     }
 
+    // Public — no auth required
     @Operation(summary = SwaggerMessages.REDIRECT_URL, description = SwaggerMessages.REDIRECT_URL_DESC)
     @GetMapping("/{shortCode}")
     public ResponseEntity<Void> redirect(@PathVariable String shortCode) {
@@ -39,6 +42,7 @@ public class UrlController {
                 .build();
     }
 
+    // Public — no auth required
     @Operation(summary = SwaggerMessages.UNLOCK_URL, description = SwaggerMessages.UNLOCK_URL_DESC)
     @PostMapping("/{shortCode}/unlock")
     public ResponseEntity<Void> unlock(
@@ -50,6 +54,7 @@ public class UrlController {
                 .build();
     }
 
+    // Public — no auth required
     @Operation(summary = SwaggerMessages.CHECK_URL, description = SwaggerMessages.CHECK_URL_DESC)
     @GetMapping("/check")
     public ResponseEntity<BaseResponse> checkUrl(@RequestParam String url) {
@@ -59,6 +64,7 @@ public class UrlController {
     }
 
     @Operation(summary = SwaggerMessages.GET_URL_STATS, description = SwaggerMessages.GET_URL_STATS_DESC)
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/{shortCode}/stats")
     public ResponseEntity<BaseResponse> getUrlStats(@PathVariable String shortCode) {
         return ResponseEntity.ok(new BaseResponse(Messages.URL_STATS, urlService.getUrlStats(shortCode)));

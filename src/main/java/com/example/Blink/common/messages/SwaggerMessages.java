@@ -2,6 +2,20 @@ package com.example.Blink.common.messages;
 
 public class SwaggerMessages {
 
+    //========================= Auth Tag =========================
+
+    public static final String TAG_AUTH = "Auth";
+    public static final String TAG_AUTH_DESC = "Endpoints for authentication and token management";
+
+    public static final String LOGIN = "Login";
+    public static final String LOGIN_DESC = "Authenticate with username/email and password, returns access and refresh tokens";
+
+    public static final String REFRESH_TOKEN = "Refresh Token";
+    public static final String REFRESH_TOKEN_DESC = "Exchange a valid refresh token for a new access token and rotated refresh token";
+
+    public static final String LOGOUT = "Logout";
+    public static final String LOGOUT_DESC = "Revoke the refresh token and end the session";
+
     //========================= URL Tag =========================
 
     public static final String TAG_URL = "URL";

@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,24 +33,28 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.UPDATE_USER, description = SwaggerMessages.UPDATE_USER_DESC)
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
     @PutMapping("/{userId}")
     public ResponseEntity<BaseResponse> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(new BaseResponse(Messages.USER_UPDATED, userService.updateUser(userId, request)));
     }
 
     @Operation(summary = SwaggerMessages.GET_USER_BY_ID, description = SwaggerMessages.GET_USER_BY_ID_DESC)
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
     @GetMapping("/{userId}")
     public ResponseEntity<BaseResponse> getUserById(@PathVariable Long userId) {
         return ResponseEntity.ok(new BaseResponse(Messages.USER_FETCHED, userService.getUserById(userId)));
     }
 
     @Operation(summary = SwaggerMessages.GET_USER_BY_IDENTIFIER, description = SwaggerMessages.GET_USER_BY_IDENTIFIER_DESC)
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
     @GetMapping("/find/{identifier}")
     public ResponseEntity<BaseResponse> getUserByIdentifier(@PathVariable String identifier) {
         return ResponseEntity.ok(new BaseResponse(Messages.USER_FETCHED, userService.getUserByUsernameOrEmail(identifier)));
     }
 
     @Operation(summary = SwaggerMessages.GET_ALL_USERS, description = SwaggerMessages.GET_ALL_USERS_DESC)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<BaseResponse> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -58,6 +63,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.GET_DEACTIVATED_USERS, description = SwaggerMessages.GET_DEACTIVATED_USERS_DESC)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/deactivated")
     public ResponseEntity<BaseResponse> getAllDeactivatedUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -66,6 +72,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.DELETE_USER, description = SwaggerMessages.DELETE_USER_DESC)
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{userId}")
     public ResponseEntity<BaseResponse> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
@@ -73,6 +80,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.ACTIVATE_USER, description = SwaggerMessages.ACTIVATE_USER_DESC)
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{userId}/activate")
     public ResponseEntity<BaseResponse> activateUser(@PathVariable Long userId) {
         userService.activateUser(userId);
@@ -80,6 +88,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.SEARCH_USERS, description = SwaggerMessages.SEARCH_USERS_DESC)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<BaseResponse> searchUsers(
             @RequestParam String keyword,
@@ -89,6 +98,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.GET_USERS_BY_ROLE, description = SwaggerMessages.GET_USERS_BY_ROLE_DESC)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/role/{roleId}")
     public ResponseEntity<BaseResponse> getUsersByRole(
             @PathVariable Long roleId,
@@ -98,6 +108,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.UPDATE_PROFILE_PICTURE, description = SwaggerMessages.UPDATE_PROFILE_PICTURE_DESC)
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
     @PatchMapping("/{userId}/profile-picture")
     public ResponseEntity<BaseResponse> updateProfilePicture(
             @PathVariable Long userId,

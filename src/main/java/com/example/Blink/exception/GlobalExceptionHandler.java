@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -17,8 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import javax.naming.AuthenticationException;
-import java.nio.file.AccessDeniedException;
-
+import org.springframework.security.authorization.AuthorizationDeniedException;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     // === Common Utility === //
@@ -108,6 +108,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WrongPasswordException.class)
     public ResponseEntity<BaseResponse> handleWrongPassword(WrongPasswordException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<BaseResponse> handleInvalidToken(InvalidTokenException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AlreadyLoggedOutException.class)
+    public ResponseEntity<BaseResponse> handleAlreadyLoggedOut(AlreadyLoggedOutException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
     }
 
 

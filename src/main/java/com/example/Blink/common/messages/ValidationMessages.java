@@ -18,6 +18,11 @@ public class ValidationMessages {
 
     public static final String ROLE_NAME_NOT_BLANK = "Role name must not be blank";
 
+    //========================= Auth =========================
+
+    public static final String USERNAME_OR_EMAIL_REQUIRED = "Username or email is required";
+    public static final String REFRESH_TOKEN_REQUIRED = "Refresh token is required";
+
     //========================= User =========================
 
     public static final String USERNAME_NOT_BLANK = "Username is required";

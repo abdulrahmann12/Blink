@@ -45,6 +45,11 @@ public class Messages {
 
     //========================= Auth =========================
 
+    public static final String LOGIN_SUCCESS = "Login successful";
+    public static final String LOGOUT_SUCCESS = "Logged out successfully";
+    public static final String ALREADY_LOGGED_OUT = "You are already logged out";
+    public static final String TOKEN_REFRESHED = "Token refreshed successfully";
+    public static final String INVALID_TOKEN = "Invalid or expired refresh token";
     public static final String BAD_CREDENTIALS = "Invalid username or password";
     public static final String AUTH_FAILED = "Authentication failed";
     public static final String ACCESS_DENIED = "You do not have permission to perform this action";
