@@ -1,29 +1,32 @@
 package com.example.Blink.url.service;
 
-import com.example.Blink.exception.AliasAlreadyUsed;
-import com.example.Blink.exception.UrlExpiredException;
-import com.example.Blink.exception.UrlLockedException;
-import com.example.Blink.exception.UrlNotActiveException;
-import com.example.Blink.exception.UrlNotFoundException;
-import com.example.Blink.exception.InvalidUrlException;
-import com.example.Blink.exception.WrongPasswordException;
+import com.example.Blink.common.dto.ChangePasswordRequest;
+import com.example.Blink.exception.*;
+import com.example.Blink.security.AuthenticatedUserService;
 import com.example.Blink.url.dto.CreateUrlRequest;
+import com.example.Blink.url.dto.DashboardResponse;
+import com.example.Blink.url.dto.UpdateUrlRequest;
 import com.example.Blink.url.dto.UrlResponse;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.url.mapper.UrlMapper;
 import com.example.Blink.url.repository.UrlRepository;
+import com.example.Blink.user.entity.User;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
+import org.springframework.beans.factory.annotation.Value;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,16 +35,22 @@ public class UrlService {
     private final UrlRepository urlRepository;
     private final UrlMapper urlMapper;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticatedUserService authenticatedUserService;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int SHORT_CODE_LENGTH = 7;
-    private static final String BASE_URL = "https://blink.ly/";
+    @Value("${app.base-url}")
+    private String baseUrl;
     private static final SecureRandom random = new SecureRandom();
 
     @Transactional
     public UrlResponse generateShortUrl(@Valid CreateUrlRequest request){
 
-        if (!checkUrl(request.getOriginalUrl())) {
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        try {
+            URI.create(request.getOriginalUrl());
+        } catch (Exception e) {
             throw new InvalidUrlException();
         }
 
@@ -54,7 +63,7 @@ public class UrlService {
         }
 
         Url url = urlMapper.toEntity(request);
-        url.setCustomAlias(alias); // override mapper — normalize blank to null
+        url.setCustomAlias(alias);
 
         if(request.getPassword() != null && !request.getPassword().isBlank()){
             url.setPasswordProtected(true);
@@ -62,9 +71,9 @@ public class UrlService {
         }
 
         String code = (alias != null) ? alias : generateUniqueShortCode();
-        url.setShortUrl(BASE_URL + code);
+        url.setShortUrl(baseUrl + code);
         url.setActive(true);
-
+        url.setUser(currentUser);
         Url savedUrl = urlRepository.save(url);
         return urlMapper.toResponse(savedUrl);
 
@@ -72,12 +81,17 @@ public class UrlService {
 
     private String generateUniqueShortCode() {
         String code;
-        do {
-            code = generateShortCode();
-        } while (urlRepository.existsByShortUrl(BASE_URL + code));
-        return code;
-    }
+        for (int i = 0; i < 10; i++) {
 
+            code = generateShortCode();
+
+            if (!urlRepository.existsByShortUrl(baseUrl + code)) {
+                return code;
+            }
+        }
+
+        throw new RuntimeException("Failed generating unique code");
+    }
 
     private String generateShortCode() {
         StringBuilder sb = new StringBuilder(SHORT_CODE_LENGTH);
@@ -89,7 +103,7 @@ public class UrlService {
 
     @Transactional
     public String getOriginalUrl(String shortCode) {
-        Url url = urlRepository.findByShortUrl(BASE_URL + shortCode)
+        Url url = urlRepository.findByShortUrl(baseUrl + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
 
         validateUrl(url);
@@ -104,7 +118,7 @@ public class UrlService {
 
     @Transactional
     public String unlockUrl(String shortCode, String password) {
-        Url url = urlRepository.findByShortUrl(BASE_URL + shortCode)
+        Url url = urlRepository.findByShortUrl(baseUrl + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
 
         validateUrl(url);
@@ -142,9 +156,153 @@ public class UrlService {
     }
 
     public UrlResponse getUrlStats(String shortCode) {
-        Url url = urlRepository.findByShortUrl(BASE_URL + shortCode)
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        Url url = urlRepository.findByShortUrl(baseUrl + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
+
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
         return urlMapper.toResponse(url);
+    }
+
+    @Transactional
+    public void toggleStatus(UUID urlId) {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        url.setActive(!url.isActive());
+    }
+
+    public UrlResponse getUrlById(UUID urlId) {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        Url url = urlRepository.findByIdWithUser(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        boolean isOwner =
+                url.getUser().getUserId().equals(currentUser.getUserId());
+
+        boolean isAdmin =
+                currentUser.getRole().getRoleName().equals("ADMIN");
+
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedException();
+        }
+
+        return urlMapper.toResponse(url);
+    }
+
+    public Page<UrlResponse> getUserUrls(int page, int size) {
+        User currentUser = authenticatedUserService.getCurrentUser();
+        Pageable pageable = Pageable.ofSize(size).withPage(page);
+        return urlRepository.findAllByUser_UserId(currentUser.getUserId(), pageable)
+                .map(urlMapper::toResponse);
+    }
+
+    @Transactional
+    public UrlResponse updateUrl(UUID urlId, UpdateUrlRequest request) {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        if (request.getTitle() != null)
+            url.setTitle(request.getTitle());
+
+        if (request.getExpireAt() != null)
+            url.setExpireAt(request.getExpireAt());
+
+        if (request.getActive() != null)
+            url.setActive(request.getActive());
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            url.setPasswordProtected(true);
+            url.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        }
+        Url updatedUrl = urlRepository.save(url);
+
+        return urlMapper.toResponse(updatedUrl);
+    }
+
+    @Transactional
+    public void removePassword(UUID urlId) {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        url.setPasswordProtected(false);
+        url.setPasswordHash(null);
+    }
+
+    public DashboardResponse getDashboard() {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        long total = urlRepository.countByUser(currentUser);
+        long active = urlRepository.countByUserAndActiveTrue(currentUser);
+        long clicks = urlRepository.sumClicksByUser(currentUser);
+        long expired = urlRepository.countExpiredUrls(currentUser, LocalDateTime.now());
+
+        DashboardResponse response = new DashboardResponse();
+        response.setTotalUrls(total);
+        response.setActiveUrls(active);
+        response.setTotalClicks(clicks);
+        response.setExpiredUrls(expired);
+
+        return response;
+    }
+
+    @Transactional
+    public void changePassword(UUID urlId, @NonNull ChangePasswordRequest request) {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        if (request.getNewPassword() == null ||
+                request.getNewPassword().isBlank()) {
+            throw new InvalidNewPasswordException();
+        }
+
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        if (url.isPasswordProtected() && url.getPasswordHash() != null) {
+
+            if (!passwordEncoder.matches(
+                    request.getCurrentPassword(),
+                    url.getPasswordHash())) {
+
+                throw new WrongPasswordException();
+            }
+        }
+
+        url.setPasswordProtected(true);
+        url.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
     }
 }
 

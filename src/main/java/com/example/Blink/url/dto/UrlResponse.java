@@ -24,6 +24,8 @@ public class UrlResponse {
 
     private String customAlias;
 
+    private String userName;
+
     private boolean passwordProtected;
 
     private boolean active;

@@ -1,12 +1,17 @@
 package com.example.Blink.url.repository;
 
 import com.example.Blink.url.entity.Url;
+import com.example.Blink.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,4 +29,55 @@ public interface UrlRepository extends JpaRepository<Url, UUID> {
     @Modifying
     @Query("UPDATE Url u SET u.clickCount = u.clickCount + 1 WHERE u.urlId = :id")
     void incrementClickCount(@Param("id") UUID id);
+
+    @Query(
+            value = "SELECT u FROM Url u JOIN FETCH u.user WHERE u.user.userId = :userId",
+            countQuery = "SELECT COUNT(u) FROM Url u WHERE u.user.userId = :userId"
+    )
+    Page<Url> findAllByUser_UserId(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("""
+       SELECT u
+       FROM Url u
+       JOIN FETCH u.user
+       WHERE u.urlId = :id
+       AND u.user.userId = :userId
+       """)
+    Optional<Url> findByIdAndUser_UserId(
+            @Param("id") UUID id,
+            @Param("userId") Long userId
+    );
+    long countByUser(User user);
+
+    long countByUserAndActiveTrue(User user);
+
+    @Query("SELECT COALESCE(SUM(u.clickCount),0) FROM Url u WHERE u.user = :user")
+    long sumClicksByUser(User user);
+
+    @Query("""
+    SELECT COUNT(u)
+    FROM Url u
+    WHERE u.user = :user
+    AND u.expireAt < :now
+""")
+    long countExpiredUrls(User user, LocalDateTime now);
+
+    @Query("""
+    SELECT u FROM Url u
+    WHERE u.user = :user
+    AND (
+        LOWER(u.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(u.originalUrl) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(u.customAlias) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+""")
+    List<Url> searchByUserAndKeyword(User user, String keyword);
+
+    @Query("""
+    SELECT u
+    FROM Url u
+    JOIN FETCH u.user
+    WHERE u.urlId = :id
+""")
+    Optional<Url> findByIdWithUser(@Param("id") UUID id);
 }

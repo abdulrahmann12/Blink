@@ -21,6 +21,7 @@ public class CreateUrlRequest {
     @Size(max = 2048, message = ValidationMessages.URL_TOO_LONG)
     private String originalUrl;
 
+    @NotBlank(message = ValidationMessages.TITLE_NOT_BLANK)
     private String title;
 
     @Size(max = 100, message = ValidationMessages.ALIAS_TOO_LONG)

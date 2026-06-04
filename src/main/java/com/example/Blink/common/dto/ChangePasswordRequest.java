@@ -1,4 +1,4 @@
-package com.example.Blink.user.dto;
+package com.example.Blink.common.dto;
 
 import com.example.Blink.common.messages.ValidationMessages;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ChangePasswordRequest {
 
-    @NotBlank(message = ValidationMessages.CURRENT_PASSWORD_REQUIRED)
     private String currentPassword;
 
     @NotBlank(message = ValidationMessages.NEW_PASSWORD_REQUIRED)

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 
 import javax.naming.AuthenticationException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     // === Common Utility === //
@@ -95,6 +94,7 @@ public class GlobalExceptionHandler {
             UsernameAlreadyExistsException.class,
             RoleAlreadyExistsException.class,
             UserAlreadyDeactivatedException.class,
+            UserAlreadyActivatedException.class,
     })
     public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
@@ -115,6 +115,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, request, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(InvalidNewPasswordException.class)
+    public ResponseEntity<BaseResponse> handleInvalidPassword(InvalidNewPasswordException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(AlreadyLoggedOutException.class)
     public ResponseEntity<BaseResponse> handleAlreadyLoggedOut(AlreadyLoggedOutException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
@@ -123,6 +128,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity< BaseResponse> handleUnauthorizedAction(UnauthorizedActionException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity< BaseResponse> handleUnauthorizedException(UnauthorizedException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
     }
 

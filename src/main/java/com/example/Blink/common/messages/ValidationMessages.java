@@ -5,6 +5,7 @@ public class ValidationMessages {
     //========================= URL =========================
 
     public static final String URL_NOT_BLANK = "Original URL cannot be blank";
+    public static final String TITLE_NOT_BLANK = "Title cannot be blank";
     public static final String URL_FORMAT_INVALID = "Must be a valid URL";
     public static final String URL_TOO_LONG = "URL must not exceed 2048 characters";
     public static final String ALIAS_TOO_LONG = "Custom alias must not exceed 100 characters";
@@ -13,6 +14,7 @@ public class ValidationMessages {
     //========================= Password =========================
 
     public static final String PASSWORD_NOT_BLANK = "Password cannot be blank";
+    public static final String CURRENT_PASSWORD_NOT_BLANK = "Password cannot be blank";
 
     //========================= Role =========================
 

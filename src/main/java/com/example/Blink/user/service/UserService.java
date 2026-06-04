@@ -10,7 +10,6 @@ import com.example.Blink.exception.UserNotFoundException;
 import com.example.Blink.exception.UsernameAlreadyExistsException;
 import com.example.Blink.role.repository.RoleRepository;
 import com.example.Blink.role.entity.Role;
-import com.example.Blink.user.dto.ChangePasswordRequest;
 import com.example.Blink.user.dto.CreateUserRequest;
 import com.example.Blink.user.dto.UpdateUserRequest;
 import com.example.Blink.user.dto.UserResponse;

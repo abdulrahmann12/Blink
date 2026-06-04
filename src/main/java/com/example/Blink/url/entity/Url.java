@@ -1,5 +1,6 @@
 package com.example.Blink.url.entity;
 
+import com.example.Blink.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +40,10 @@ public class Url {
     private String passwordHash;
 
     private LocalDateTime expireAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 
     private boolean active;
 

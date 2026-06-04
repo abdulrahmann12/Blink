@@ -17,7 +17,9 @@ public interface UrlMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletesAt", ignore = true)
+    @Mapping(target = "user", ignore = true)
     Url toEntity(CreateUrlRequest createUrlRequest);
 
+    @Mapping(target = "userName", source = "user.username")
     UrlResponse toResponse(Url url);
 }
