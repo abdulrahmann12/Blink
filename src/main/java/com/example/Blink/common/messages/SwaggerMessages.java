@@ -38,26 +38,13 @@ public class SwaggerMessages {
     public static final String GET_URL_STATS = "Get URL Statistics";
     public static final String GET_URL_STATS_DESC = "Returns details and statistics for a given short URL code";
 
-    public static final String TOGGLE_URL_STATUS = "Toggle URL Status";
-    public static final String TOGGLE_URL_STATUS_DESC = "Activates or deactivates a URL by its ID";
+    //========================= URL Click Tag =========================
 
-    public static final String GET_URL_BY_ID = "Get URL By ID";
-    public static final String GET_URL_BY_ID_DESC = "Returns URL details by its UUID";
+    public static final String TAG_URL_CLICK = "URL Clicks";
+    public static final String TAG_URL_CLICK_DESC = "Endpoints for retrieving URL click analytics";
 
-    public static final String GET_USER_URLS = "Get User URLs";
-    public static final String GET_USER_URLS_DESC = "Returns a paginated list of the authenticated user's URLs";
-
-    public static final String UPDATE_URL = "Update URL";
-    public static final String UPDATE_URL_DESC = "Updates title, expiry, active status, or password for a URL";
-
-    public static final String REMOVE_URL_PASSWORD = "Remove URL Password";
-    public static final String REMOVE_URL_PASSWORD_DESC = "Removes password protection from a URL";
-
-    public static final String GET_DASHBOARD = "Get Dashboard";
-    public static final String GET_DASHBOARD_DESC = "Returns aggregated stats: total URLs, active URLs, total clicks, and expired URLs";
-
-    public static final String CHANGE_URL_PASSWORD = "Change URL Password";
-    public static final String CHANGE_URL_PASSWORD_DESC = "Sets or changes the password for a URL";
+    public static final String GET_URL_CLICKS = "Get URL Clicks";
+    public static final String GET_URL_CLICKS_DESC = "Returns all click records for a given URL ID. Only the URL owner can access this data";
 
     //========================= Role Tag =========================
 

@@ -10,7 +10,9 @@ import com.example.Blink.url.dto.UrlResponse;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.url.mapper.UrlMapper;
 import com.example.Blink.url.repository.UrlRepository;
+import com.example.Blink.url_click.service.UrlClickService;
 import com.example.Blink.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class UrlService {
     private final UrlMapper urlMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserService authenticatedUserService;
+    private final UrlClickService urlClickService;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int SHORT_CODE_LENGTH = 7;
@@ -102,7 +105,7 @@ public class UrlService {
     }
 
     @Transactional
-    public String getOriginalUrl(String shortCode) {
+    public String getOriginalUrl(String shortCode, HttpServletRequest request) {
         Url url = urlRepository.findByShortUrl(baseUrl + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
 
@@ -112,12 +115,13 @@ public class UrlService {
             throw new UrlLockedException();
         }
         urlRepository.incrementClickCount(url.getUrlId());
+        urlClickService.trackClick(url, request);
 
         return url.getOriginalUrl();
     }
 
     @Transactional
-    public String unlockUrl(String shortCode, String password) {
+    public String unlockUrl(String shortCode, String password, HttpServletRequest request) {
         Url url = urlRepository.findByShortUrl(baseUrl + shortCode)
                 .orElseThrow(UrlNotFoundException::new);
 
@@ -128,6 +132,7 @@ public class UrlService {
         }
 
         urlRepository.incrementClickCount(url.getUrlId());
+        urlClickService.trackClick(url, request);
 
         return url.getOriginalUrl();
     }

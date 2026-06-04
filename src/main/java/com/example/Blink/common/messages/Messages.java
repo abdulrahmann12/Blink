@@ -18,12 +18,7 @@ public class Messages {
     public static final String URL_LOCKED = "This URL is password protected";
     public static final String WRONG_PASSWORD = "Incorrect password";
     public static final String INVALID_NEW_PASSWORD = "Invalid new password";
-    public static final String URL_TOGGLED = "URL status toggled successfully";
-    public static final String URL_FETCHED = "URL retrieved successfully";
-    public static final String URLS_FETCHED = "URLs retrieved successfully";
-    public static final String URL_PASSWORD_REMOVED = "URL password removed successfully";
-    public static final String URL_PASSWORD_CHANGED = "URL password changed successfully";
-    public static final String DASHBOARD_FETCHED = "Dashboard data retrieved successfully";
+    public static final String URL_CLICKS_FETCHED = "URL clicks retrieved successfully";
     //========================= User =========================
 
     public static final String USER_CREATED = "User created successfully";
