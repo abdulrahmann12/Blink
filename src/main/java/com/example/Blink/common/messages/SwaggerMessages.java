@@ -46,6 +46,18 @@ public class SwaggerMessages {
     public static final String GET_URL_CLICKS = "Get URL Clicks";
     public static final String GET_URL_CLICKS_DESC = "Returns all click records for a given URL ID. Only the URL owner can access this data";
 
+    public static final String GET_TOTAL_CLICKS = "Get Total Clicks";
+    public static final String GET_TOTAL_CLICKS_DESC = "Returns the total number of clicks for a given URL ID";
+
+    public static final String GET_CLICKS_TODAY = "Get Clicks By Date";
+    public static final String GET_CLICKS_TODAY_DESC = "Returns the total number of clicks for a given URL ID on a specific date (format: yyyy-MM-dd)";
+
+    public static final String GET_TOP_COUNTRIES = "Get Top Countries";
+    public static final String GET_TOP_COUNTRIES_DESC = "Returns the top 5 countries by click count for a given URL ID";
+
+    public static final String GET_TOP_BROWSERS = "Get Top Browsers";
+    public static final String GET_TOP_BROWSERS_DESC = "Returns the top 5 browsers by click count for a given URL ID";
+
     //========================= Role Tag =========================
 
     public static final String TAG_ROLE = "Role";

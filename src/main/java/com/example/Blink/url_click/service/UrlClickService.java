@@ -24,9 +24,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -92,7 +98,7 @@ public class UrlClickService {
 
     // ========================= Query =========================
 
-    public List<UrlClickResponse> getClicksByUrlId(UUID urlId) {
+    public Page<UrlClickResponse> getClicksByUrlId(UUID urlId, int page, int size) {
         Url url = urlRepository.findById(urlId)
                 .orElseThrow(UrlNotFoundException::new);
 
@@ -101,10 +107,9 @@ public class UrlClickService {
             throw new UnauthorizedException();
         }
 
-        List<UrlClick> clicks = urlClickRepository.findByUrl_UrlId(urlId);
-        return clicks.stream()
-                .map(urlClickMapper::toUrlClickResponse)
-                .toList();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<UrlClick> clicks = urlClickRepository.findByUrl_UrlId(urlId, pageable);
+        return clicks.map(urlClickMapper::toUrlClickResponse);
     }
 
     // ========================= IP Extraction =========================
@@ -180,4 +185,52 @@ public class UrlClickService {
 
         return sanitized;
     }
+
+    public Long totalClick(UUID urlId) {
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+        return urlClickRepository.countByUrl_UrlId(urlId);
+    }
+
+    public Long clickPerDay(UUID urlId, LocalDate date) {
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+        Instant startOfDay = date.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant endOfDay = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return urlClickRepository.countByUrl_UrlIdAndVisitedAtBetween(urlId, startOfDay, endOfDay);
+    }
+
+    public List<String> topCountries(UUID urlId) {
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+        return urlClickRepository.findTopCountriesByUrlId(urlId);
+    }
+
+    public List<String> topBrowsers(UUID urlId) {
+        Url url = urlRepository.findById(urlId)
+                .orElseThrow(UrlNotFoundException::new);
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+        // Implement a method in UrlClickRepository to get top browsers by URL ID
+        return urlClickRepository.findTopBrowsersByUrlId(urlId);
+    }
+
 }

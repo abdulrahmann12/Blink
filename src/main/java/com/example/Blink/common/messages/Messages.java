@@ -19,6 +19,10 @@ public class Messages {
     public static final String WRONG_PASSWORD = "Incorrect password";
     public static final String INVALID_NEW_PASSWORD = "Invalid new password";
     public static final String URL_CLICKS_FETCHED = "URL clicks retrieved successfully";
+    public static final String TOTAL_CLICKS_FETCHED = "Total clicks retrieved successfully";
+    public static final String CLICKS_TODAY_FETCHED = "Today's clicks retrieved successfully";
+    public static final String TOP_COUNTRIES_FETCHED = "Top countries retrieved successfully";
+    public static final String TOP_BROWSERS_FETCHED = "Top browsers retrieved successfully";
     //========================= User =========================
 
     public static final String USER_CREATED = "User created successfully";
