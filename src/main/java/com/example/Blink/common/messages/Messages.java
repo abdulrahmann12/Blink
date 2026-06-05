@@ -23,6 +23,12 @@ public class Messages {
     public static final String CLICKS_TODAY_FETCHED = "Today's clicks retrieved successfully";
     public static final String TOP_COUNTRIES_FETCHED = "Top countries retrieved successfully";
     public static final String TOP_BROWSERS_FETCHED = "Top browsers retrieved successfully";
+    public static final String URL_TOGGLED = "URL status toggled successfully";
+    public static final String URL_FETCHED = "URL retrieved successfully";
+    public static final String URLS_FETCHED = "URLs retrieved successfully";
+    public static final String PASSWORD_REMOVED = "Password removed successfully";
+    public static final String DASHBOARD_FETCHED = "Dashboard data retrieved successfully";
+    public static final String PASSWORD_CHANGED = "Password changed successfully";
     //========================= User =========================
 
     public static final String USER_CREATED = "User created successfully";

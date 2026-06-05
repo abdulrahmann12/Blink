@@ -20,6 +20,8 @@ import com.example.Blink.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +48,7 @@ public class UserService {
     private static final String DEFAULT_ROLE = "USER";
 
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public UserResponse createUser(@Valid CreateUserRequest createUserRequest){
         if(userRepository.existsByEmail(createUserRequest.getEmail())){
             throw new EmailAlreadyExistsException();
@@ -64,6 +67,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public UserResponse updateUser(Long userId, @Valid UpdateUserRequest updateUserRequest){
         User user = userRepository.findByIdWithRole(userId).orElseThrow(UserNotFoundException::new);
         if (!user.isActive()) {
@@ -81,11 +85,13 @@ public class UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
+    @Cacheable(value = "users", key = "#p0")
     public UserResponse getUserById(Long userId){
         User user = userRepository.findByIdWithRole(userId).orElseThrow(UserNotFoundException::new);
         return userMapper.toResponse(user);
     }
 
+    @Cacheable(value = "users", key = "#p0")
     public UserResponse getUserByUsernameOrEmail(String emailOrUsername){
         User user = userRepository.findByUsernameOrEmailWithRole(emailOrUsername.trim().toLowerCase())
                 .orElseThrow(UserNotFoundException::new);
@@ -103,6 +109,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         if(!user.isActive()){
@@ -114,6 +121,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public void activateUser(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
         user.setActive(true);
@@ -122,6 +130,7 @@ public class UserService {
     }
 
     @Transactional
+    @CacheEvict(value = "users", allEntries = true)
     public UserResponse updateProfilePicture(Long userId, MultipartFile image) throws IOException {
         if (image == null || image.isEmpty()) {
             throw new ImageNullException();

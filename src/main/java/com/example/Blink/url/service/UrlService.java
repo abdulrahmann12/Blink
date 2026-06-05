@@ -17,6 +17,8 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,6 +49,7 @@ public class UrlService {
     private static final SecureRandom random = new SecureRandom();
 
     @Transactional
+    @CacheEvict(value = "urls", allEntries = true)
     public UrlResponse generateShortUrl(@Valid CreateUrlRequest request){
 
         User currentUser = authenticatedUserService.getCurrentUser();
@@ -174,6 +177,7 @@ public class UrlService {
     }
 
     @Transactional
+    @CacheEvict(value = "urls", allEntries = true)
     public void toggleStatus(UUID urlId) {
 
         User currentUser = authenticatedUserService.getCurrentUser();
@@ -216,6 +220,7 @@ public class UrlService {
     }
 
     @Transactional
+    @CacheEvict(value = "urls", allEntries = true)
     public UrlResponse updateUrl(UUID urlId, UpdateUrlRequest request) {
 
         User currentUser = authenticatedUserService.getCurrentUser();
@@ -246,6 +251,7 @@ public class UrlService {
     }
 
     @Transactional
+    @CacheEvict(value = "urls", allEntries = true)
     public void removePassword(UUID urlId) {
 
         User currentUser = authenticatedUserService.getCurrentUser();
@@ -260,6 +266,7 @@ public class UrlService {
         url.setPasswordProtected(false);
         url.setPasswordHash(null);
     }
+
 
     public DashboardResponse getDashboard() {
 
@@ -280,6 +287,7 @@ public class UrlService {
     }
 
     @Transactional
+    @CacheEvict(value = "urls", allEntries = true)
     public void changePassword(UUID urlId, @NonNull ChangePasswordRequest request) {
 
         User currentUser = authenticatedUserService.getCurrentUser();

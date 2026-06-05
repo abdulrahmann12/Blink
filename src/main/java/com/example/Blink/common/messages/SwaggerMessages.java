@@ -38,6 +38,27 @@ public class SwaggerMessages {
     public static final String GET_URL_STATS = "Get URL Statistics";
     public static final String GET_URL_STATS_DESC = "Returns details and statistics for a given short URL code";
 
+    public static final String TOGGLE_URL_STATUS = "Toggle URL Status";
+    public static final String TOGGLE_URL_STATUS_DESC = "Toggles the active/inactive status of a URL owned by the authenticated user";
+
+    public static final String GET_URL_BY_ID = "Get URL By ID";
+    public static final String GET_URL_BY_ID_DESC = "Returns URL details by its UUID. Accessible by the owner or an admin";
+
+    public static final String GET_USER_URLS = "Get My URLs";
+    public static final String GET_USER_URLS_DESC = "Returns a paginated list of all URLs created by the authenticated user";
+
+    public static final String UPDATE_URL = "Update URL";
+    public static final String UPDATE_URL_DESC = "Updates URL properties such as title, expiry, active status, and password";
+
+    public static final String REMOVE_URL_PASSWORD = "Remove URL Password";
+    public static final String REMOVE_URL_PASSWORD_DESC = "Removes the password protection from a URL owned by the authenticated user";
+
+    public static final String GET_DASHBOARD = "Get Dashboard";
+    public static final String GET_DASHBOARD_DESC = "Returns dashboard statistics including total URLs, active URLs, expired URLs, and total clicks";
+
+    public static final String CHANGE_URL_PASSWORD = "Change URL Password";
+    public static final String CHANGE_URL_PASSWORD_DESC = "Changes the password of a password-protected URL owned by the authenticated user";
+
     //========================= URL Click Tag =========================
 
     public static final String TAG_URL_CLICK = "URL Clicks";

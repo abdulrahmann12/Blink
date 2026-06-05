@@ -10,6 +10,8 @@ import com.example.Blink.role.repository.RoleRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +26,7 @@ public class RoleService {
     private final RoleMapper roleMapper;
 
     @Transactional
+    @CacheEvict(value = "roles", allEntries = true)
     public RoleResponse createRole(@Valid CreateRoleRequest request){
         if(roleRepository.findByRoleName(request.getRoleName()).isPresent()){
             throw new RoleAlreadyExistsException();
@@ -36,6 +39,7 @@ public class RoleService {
     }
 
     @Transactional
+    @CacheEvict(value = "roles", allEntries = true)
     public RoleResponse updateRole(Long roleId, @Valid CreateRoleRequest request){
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(RoleNotFoundException::new);
@@ -55,18 +59,21 @@ public class RoleService {
                 .map(roleMapper::toResponse);
     }
 
+    @Cacheable(value = "roles", key = "#p0")
     public RoleResponse getRoleById(Long roleId){
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(RoleNotFoundException::new);
         return roleMapper.toResponse(role);
     }
 
+    @Cacheable(value = "roles", key = "#p0.toUpperCase()")
     public RoleResponse getRoleByName(String roleName){
         Role role = roleRepository.findByRoleName(roleName.trim().toUpperCase())
                 .orElseThrow(RoleNotFoundException::new);
         return roleMapper.toResponse(role);
     }
 
+    @CacheEvict(value = "roles", allEntries = true)
     public void deleteRole(Long roleId){
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(RoleNotFoundException::new);

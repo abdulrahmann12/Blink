@@ -17,6 +17,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -75,6 +78,13 @@ public class UrlClickService {
     @Async("clickTrackingExecutor")
     @EventListener
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "urlClicks", allEntries = true),
+            @CacheEvict(value = "totalClicks", allEntries = true),
+            @CacheEvict(value = "clicksByDate", allEntries = true),
+            @CacheEvict(value = "topCountries", allEntries = true),
+            @CacheEvict(value = "topBrowsers", allEntries = true)
+    })
     public void handleClickTrackingEvent(ClickTrackingEvent event) {
         try {
             Url url = urlRepository.getReferenceById(event.urlId());
@@ -186,6 +196,7 @@ public class UrlClickService {
         return sanitized;
     }
 
+    @Cacheable(value = "totalClicks", key = "#p0")
     public Long totalClick(UUID urlId) {
         Url url = urlRepository.findById(urlId)
                 .orElseThrow(UrlNotFoundException::new);
@@ -197,6 +208,7 @@ public class UrlClickService {
         return urlClickRepository.countByUrl_UrlId(urlId);
     }
 
+    @Cacheable(value = "clicksByDate", key = "#urlId + '-' + #date")
     public Long clickPerDay(UUID urlId, LocalDate date) {
         Url url = urlRepository.findById(urlId)
                 .orElseThrow(UrlNotFoundException::new);
@@ -210,6 +222,7 @@ public class UrlClickService {
         return urlClickRepository.countByUrl_UrlIdAndVisitedAtBetween(urlId, startOfDay, endOfDay);
     }
 
+    @Cacheable(value = "topCountries", key = "#p0")
     public List<String> topCountries(UUID urlId) {
         Url url = urlRepository.findById(urlId)
                 .orElseThrow(UrlNotFoundException::new);
@@ -221,6 +234,7 @@ public class UrlClickService {
         return urlClickRepository.findTopCountriesByUrlId(urlId);
     }
 
+    @Cacheable(value = "topBrowsers", key = "#p0")
     public List<String> topBrowsers(UUID urlId) {
         Url url = urlRepository.findById(urlId)
                 .orElseThrow(UrlNotFoundException::new);
