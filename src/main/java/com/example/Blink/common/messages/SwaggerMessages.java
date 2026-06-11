@@ -140,4 +140,22 @@ public class SwaggerMessages {
     public static final String GET_DEACTIVATED_USERS = "Get Deactivated Users";
     public static final String GET_DEACTIVATED_USERS_DESC = "Returns a paginated list of all deactivated users";
 
+    //========================= QR Code Tag =========================
+
+    public static final String TAG_QR_CODE = "QR Code";
+    public static final String TAG_QR_CODE_DESC = "Endpoints for generating, retrieving, and deleting QR codes";
+
+    public static final String GENERATE_QR_CODE = "Generate QR Code";
+    public static final String GENERATE_QR_CODE_DESC = "Generates a QR code image for the specified URL ID";
+
+    public static final String GET_QR_CODE = "Get QR Code";
+    public static final String GET_QR_CODE_DESC = "Retrieves the QR code associated with the specified URL ID";
+
+    public static final String DELETE_QR_CODE = "Delete QR Code";
+    public static final String DELETE_QR_CODE_DESC = "Deletes the QR code associated with the specified URL ID";
+
+    public static final String QR_CODE_GENERATED = "QR code generated successfully";
+    public static final String QR_CODE_RETRIEVED = "QR code retrieved successfully";
+    public static final String QR_CODE_DELETED = "QR code deleted successfully";
+
 }

@@ -37,8 +37,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(QrGenerationException.class)
+    public ResponseEntity<BaseResponse> handleQrCodeException(QrGenerationException ex, HttpServletRequest request) {
+        BaseResponse response = new BaseResponse(ex.getMessage(), request.getRequestURI());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(ImageUploadException.class)
     public ResponseEntity<BaseResponse> handleImageUpload(ImageUploadException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ImageDeletedException.class)
+    public ResponseEntity<BaseResponse> handleImageDeleted(ImageDeletedException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -84,6 +95,8 @@ public class GlobalExceptionHandler {
             RoleNotFoundException.class,
             UserNotFoundException.class,
             UserNotActiveException.class,
+            QrCodeNotFoundException.class,
+
     })
     public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
@@ -95,6 +108,8 @@ public class GlobalExceptionHandler {
             RoleAlreadyExistsException.class,
             UserAlreadyDeactivatedException.class,
             UserAlreadyActivatedException.class,
+            QrCodeAlreadyExistsException.class,
+
     })
     public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);

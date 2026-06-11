@@ -76,6 +76,15 @@ public class Messages {
 
     public static final String IMAGE_UPLOAD_FAILED = "Failed to upload image, please try again later";
     public static final String IMAGE_NULL = "Image must not be null or empty";
+    public static final String IMAGE_DELETED_FAILED = "Failed to delete image, please try again later";
+
+
+    // ==================== QR Code Messages ====================
+    public static final String QR_GENERATED = "QR code generated successfully.";
+    public static final String QR_GENERATION_FAILED = "Failed to generate the QR code. Please try again.";
+    public static final String QR_ALREADY_EXISTS = "Qr Code already exists";
+    public static final String QR_NOT_FOUND = "QR Code not found";
+
 
     //========================= General =========================
 

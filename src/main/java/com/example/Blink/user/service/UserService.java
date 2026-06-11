@@ -8,6 +8,7 @@ import com.example.Blink.exception.UserNotActiveException;
 import com.example.Blink.exception.UserAlreadyDeactivatedException;
 import com.example.Blink.exception.UserNotFoundException;
 import com.example.Blink.exception.UsernameAlreadyExistsException;
+import com.example.Blink.common.dto.ImageUploadResult;
 import com.example.Blink.role.repository.RoleRepository;
 import com.example.Blink.role.entity.Role;
 import com.example.Blink.user.dto.CreateUserRequest;
@@ -136,8 +137,8 @@ public class UserService {
             throw new ImageNullException();
         }
         User user = userRepository.findByIdWithRole(userId).orElseThrow(UserNotFoundException::new);
-        String imageUrl = imageService.uploadImage(image.getBytes());
-        user.setProfilePictureUrl(imageUrl);
+        ImageUploadResult imageUploadResult = imageService.uploadImage(image.getBytes());
+        user.setProfilePictureUrl(imageUploadResult.imageUrl());
         return userMapper.toResponse(userRepository.save(user));
     }
 
