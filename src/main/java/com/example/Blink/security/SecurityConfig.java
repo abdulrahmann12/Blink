@@ -1,6 +1,7 @@
 package com.example.Blink.security;
 
 import com.example.Blink.jwt.service.JwtService;
+import com.example.Blink.rate_limit.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,7 @@ public class SecurityConfig {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final RateLimitFilter rateLimitFilter;
 
     @Value("${cors.allowed-origins:http://localhost:3000}")
     private String allowedOrigins;
@@ -62,7 +64,10 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter,
+                        JwtAuthenticationFilter.class);
+
 
         return http.build();
     }

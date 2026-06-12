@@ -94,4 +94,6 @@ public class Messages {
     public static final String URL_INVALID = "URL is not reachable or invalid";
     public static final String REQUEST_NOT_SUPPORTED = "HTTP method not supported for this endpoint";
 
+    //========================= Rate Limit =========================
+    public static final String TOO_MANY_REQUESTS = "Too many requests";
 }

@@ -53,6 +53,12 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<BaseResponse> handleRateLimit(RateLimitExceededException ex, HttpServletRequest request) {
+        BaseResponse response = new BaseResponse(ex.getMessage(), request.getRequestURI());
+        return new ResponseEntity<>(response, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
     @ExceptionHandler(ImageNullException.class)
     public ResponseEntity<BaseResponse> handleImageNull(ImageNullException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
