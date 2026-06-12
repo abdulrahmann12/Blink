@@ -11,6 +11,12 @@ public class ValidationMessages {
     public static final String ALIAS_TOO_LONG = "Custom alias must not exceed 100 characters";
     public static final String EXPIRE_DATE_FUTURE = "Expiry date must be in the future";
 
+
+    //========================= Block URL =========================
+
+    public static final String DOMAIN_NOT_BLANK = "Domain cannot be blank";
+    public static final String REASON_NOT_BLANK = "Reason cannot be blank";
+
     //========================= Password =========================
 
     public static final String PASSWORD_NOT_BLANK = "Password cannot be blank";

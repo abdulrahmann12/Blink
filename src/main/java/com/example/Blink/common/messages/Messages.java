@@ -85,6 +85,20 @@ public class Messages {
     public static final String QR_ALREADY_EXISTS = "Qr Code already exists";
     public static final String QR_NOT_FOUND = "QR Code not found";
 
+    //========================= Blocked URL =========================
+
+    public static final String DOMAIN_ALREADY_BLOCKED = "Domain is already blocked";
+    public static final String BLOCKED_URL_NOT_FOUND = "Blocked URL not found";
+    public static final String DOMAIN_NOT_IN_BLOCKED_LIST = "Domain not found in blocked list";
+    public static final String INVALID_DOMAIN = "Invalid domain";
+    public static final String INVALID_DOMAIN_FORMAT = "Invalid domain format";
+    public static final String DOMAIN_EMPTY = "Domain cannot be empty";
+    public static final String DOMAIN_BLOCKED = "Domain blocked successfully";
+    public static final String BLOCKED_URL_UPDATED = "Blocked URL updated successfully";
+    public static final String BLOCKED_URL_FETCHED = "Blocked URL retrieved successfully";
+    public static final String BLOCKED_URLS_FETCHED = "Blocked URLs retrieved successfully";
+    public static final String DOMAIN_UNBLOCKED = "Domain unblocked successfully";
+    public static final String DOMAIN_CHECK_RESULT = "Domain block status retrieved successfully";
 
     //========================= General =========================
 

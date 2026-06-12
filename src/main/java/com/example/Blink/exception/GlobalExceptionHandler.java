@@ -102,6 +102,8 @@ public class GlobalExceptionHandler {
             UserNotFoundException.class,
             UserNotActiveException.class,
             QrCodeNotFoundException.class,
+            BlockedUrlNotFoundException.class,
+            DomainNotInBlockedListException.class,
 
     })
     public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
@@ -115,6 +117,7 @@ public class GlobalExceptionHandler {
             UserAlreadyDeactivatedException.class,
             UserAlreadyActivatedException.class,
             QrCodeAlreadyExistsException.class,
+            DomainAlreadyBlockedException.class,
 
     })
     public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {
@@ -163,6 +166,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity< BaseResponse> handleValidation(MethodArgumentNotValidException ex, WebRequest request) {
         String errorMessage = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
         return buildErrorResponse(errorMessage, request, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({
+            InvalidDomainException.class,
+            InvalidDomainFormatException.class,
+            DomainEmptyException.class,
+    })
+    public ResponseEntity<BaseResponse> handleDomainValidationExceptions(Exception ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

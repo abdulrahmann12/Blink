@@ -158,4 +158,27 @@ public class SwaggerMessages {
     public static final String QR_CODE_RETRIEVED = "QR code retrieved successfully";
     public static final String QR_CODE_DELETED = "QR code deleted successfully";
 
+    //========================= Blocked URL Tag =========================
+
+    public static final String TAG_BLOCKED_URL = "Blocked URL";
+    public static final String TAG_BLOCKED_URL_DESC = "Endpoints for managing blocked domains (admin only)";
+
+    public static final String BLOCK_DOMAIN = "Block Domain";
+    public static final String BLOCK_DOMAIN_DESC = "Blocks a domain to prevent short URL creation for it";
+
+    public static final String UPDATE_BLOCKED_URL = "Update Blocked URL";
+    public static final String UPDATE_BLOCKED_URL_DESC = "Updates the reason for a blocked domain entry";
+
+    public static final String GET_BLOCKED_URL_BY_ID = "Get Blocked URL By ID";
+    public static final String GET_BLOCKED_URL_BY_ID_DESC = "Returns a blocked URL entry by its ID";
+
+    public static final String GET_ALL_BLOCKED_URLS = "Get All Blocked URLs";
+    public static final String GET_ALL_BLOCKED_URLS_DESC = "Returns a paginated list of all blocked domains";
+
+    public static final String CHECK_DOMAIN_BLOCKED = "Check If Domain Is Blocked";
+    public static final String CHECK_DOMAIN_BLOCKED_DESC = "Checks whether a given domain is in the blocked list";
+
+    public static final String UNBLOCK_DOMAIN = "Unblock Domain";
+    public static final String UNBLOCK_DOMAIN_DESC = "Removes a domain from the blocked list by its ID";
+
 }
