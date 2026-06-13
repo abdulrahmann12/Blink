@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChangePasswordRequest {
-
     private String currentPassword;
 
     @NotBlank(message = ValidationMessages.NEW_PASSWORD_REQUIRED)
