@@ -80,4 +80,7 @@ public interface UrlRepository extends JpaRepository<Url, UUID> {
     WHERE u.urlId = :id
 """)
     Optional<Url> findByIdWithUser(@Param("id") UUID id);
+
+    @Query("SELECT u FROM Url u WHERE u.expireAt IS NOT NULL AND u.expireAt < :now")
+    List<Url> findByExpireAtBefore(@Param("now") LocalDateTime now);
 }
