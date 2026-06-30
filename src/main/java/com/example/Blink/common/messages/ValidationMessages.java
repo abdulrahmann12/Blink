@@ -30,6 +30,7 @@ public class ValidationMessages {
 
     public static final String USERNAME_OR_EMAIL_REQUIRED = "Username or email is required";
     public static final String REFRESH_TOKEN_REQUIRED = "Refresh token is required";
+    public static final String VERIFICATION_CODE = "Verification code is required";
 
     //========================= User =========================
 

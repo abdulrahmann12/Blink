@@ -3,15 +3,12 @@ package com.example.Blink.auth.service;
 import com.example.Blink.auth.dto.AuthResponse;
 import com.example.Blink.auth.dto.LoginRequestDTO;
 import com.example.Blink.auth.dto.RefreshTokenRequest;
-import com.example.Blink.exception.AlreadyLoggedOutException;
-import com.example.Blink.exception.InvalidTokenException;
-import com.example.Blink.exception.UserNotActiveException;
-import com.example.Blink.exception.UserNotFoundException;
-import com.example.Blink.exception.WrongPasswordException;
+import com.example.Blink.exception.*;
 import com.example.Blink.jwt.RefreshTokenProperties;
 import com.example.Blink.jwt.entity.Token;
 import com.example.Blink.jwt.repository.TokenRepository;
 import com.example.Blink.jwt.service.JwtService;
+import com.example.Blink.user.dto.VerifyAccountRequest;
 import com.example.Blink.user.entity.User;
 import com.example.Blink.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -68,6 +65,21 @@ public class AuthService {
                 .build());
 
         return new AuthResponse(accessToken, refreshToken);
+    }
+
+    @Transactional
+    public void verifyAccount(@Valid VerifyAccountRequest verifyAccountRequest){
+        User user = userRepository.findByUsernameOrEmailWithRole(verifyAccountRequest.getUsernameOrEmail())
+                .orElseThrow(UserNotFoundException::new);
+
+        if (user.isActive()) {
+            throw new AccountAlreadyVerifiedException();
+        }
+        if(!user.getVerificationCode().equals(verifyAccountRequest.getVerificationCode())){
+            throw new InvalidVerificationCodeException();
+        }
+        user.setActive(true);
+        user.setVerificationCode(null);
     }
 
     private String generateRefreshToken() {

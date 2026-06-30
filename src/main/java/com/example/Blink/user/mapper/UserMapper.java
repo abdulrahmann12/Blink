@@ -16,7 +16,6 @@ public interface UserMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deletesAt", ignore = true)
     @Mapping(target = "profilePictureUrl", ignore = true)
-    @Mapping(target = "verificationCode", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "role", ignore = true)
     User toEntity(CreateUserRequest createUserRequest);

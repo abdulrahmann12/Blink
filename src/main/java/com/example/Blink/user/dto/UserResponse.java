@@ -19,6 +19,7 @@ public class UserResponse {
     private String fullName;
     private String profilePictureUrl;
     private String roleName;
+    private String verificationCode;
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

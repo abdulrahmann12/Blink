@@ -6,6 +6,7 @@ import com.example.Blink.auth.service.AuthService;
 import com.example.Blink.common.dto.BaseResponse;
 import com.example.Blink.common.messages.Messages;
 import com.example.Blink.common.messages.SwaggerMessages;
+import com.example.Blink.user.dto.VerifyAccountRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -38,5 +39,12 @@ public class AuthController {
     public ResponseEntity<BaseResponse> logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request);
         return ResponseEntity.ok(new BaseResponse(Messages.LOGOUT_SUCCESS));
+    }
+
+    @Operation(summary = SwaggerMessages.VERIFY_ACCOUNT, description = SwaggerMessages.VERIFY_ACCOUNT_DESC)
+    @PostMapping("/verify-account")
+    public ResponseEntity<BaseResponse> verifyAccount(@Valid @RequestBody VerifyAccountRequest request) {
+        authService.verifyAccount(request);
+        return ResponseEntity.ok(new BaseResponse(Messages.ACCOUNT_VERIFIED));
     }
 }

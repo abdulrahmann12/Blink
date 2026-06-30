@@ -104,7 +104,7 @@ public class GlobalExceptionHandler {
             QrCodeNotFoundException.class,
             BlockedUrlNotFoundException.class,
             DomainNotInBlockedListException.class,
-
+            UserNotVerifyException.class,
     })
     public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
@@ -118,7 +118,7 @@ public class GlobalExceptionHandler {
             UserAlreadyActivatedException.class,
             QrCodeAlreadyExistsException.class,
             DomainAlreadyBlockedException.class,
-
+            AccountAlreadyVerifiedException.class,
     })
     public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
@@ -172,6 +172,7 @@ public class GlobalExceptionHandler {
             InvalidDomainException.class,
             InvalidDomainFormatException.class,
             DomainEmptyException.class,
+
     })
     public ResponseEntity<BaseResponse> handleDomainValidationExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
@@ -179,6 +180,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<BaseResponse> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ResponseEntity<BaseResponse> handleInvalidVerificationCode(InvalidVerificationCodeException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
     }
 

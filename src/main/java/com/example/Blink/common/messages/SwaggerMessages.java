@@ -16,6 +16,9 @@ public class SwaggerMessages {
     public static final String LOGOUT = "Logout";
     public static final String LOGOUT_DESC = "Revoke the refresh token and end the session";
 
+    public static final String VERIFY_ACCOUNT = "Verify Account";
+    public static final String VERIFY_ACCOUNT_DESC = "Verify a user's account using a verification code sent via email";
+
     //========================= URL Tag =========================
 
     public static final String TAG_URL = "URL";

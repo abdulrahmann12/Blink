@@ -33,6 +33,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
@@ -62,7 +63,8 @@ public class UserService {
         user.setRole(roleRepository.findByRoleName(DEFAULT_ROLE).orElseThrow(RoleNotFoundException::new));
         user.setEmail(createUserRequest.getEmail().trim().toLowerCase());
         user.setUsername(createUserRequest.getUsername().trim().toLowerCase());
-        user.setActive(true);
+        user.setActive(false);
+        user.setVerificationCode(generateConfirmationCode());
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
     }
@@ -153,4 +155,9 @@ public class UserService {
         return userRepository.searchUsers(keyword.trim(), pageable).map(userMapper::toSummaryResponse);
     }
 
+    public String generateConfirmationCode() {
+        SecureRandom random = new SecureRandom();
+        int code = 10000 + random.nextInt(90000);
+        return String.valueOf(code);
+    }
 }

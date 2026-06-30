@@ -67,6 +67,10 @@ public class Messages {
     public static final String ACCESS_DENIED = "You do not have permission to perform this action";
     public static final String SESSION_EXPIRED = "Your session has expired, please log in again";
     public static final String UNAUTHORIZED = "Unauthorized access";
+    public static final String INVALID_VERIFICATION_CODE = "Invalid verification code";
+    public static final String ACCOUNT_VERIFIED = "Account verified successfully";
+    public static final String ACCOUNT_ALREADY_VERIFIED = "Account is already verified";
+    public static final String ACCOUNT_NOT_VERIFIED = "Account is not verified";
 
     //========================= Mail =========================
 
