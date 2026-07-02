@@ -1,5 +1,6 @@
 package com.example.Blink.user.service;
 
+import com.example.Blink.common.events.UserRegisteredEvent;
 import com.example.Blink.common.service.ImageService;
 import com.example.Blink.exception.EmailAlreadyExistsException;
 import com.example.Blink.exception.RoleNotFoundException;
@@ -21,6 +22,7 @@ import com.example.Blink.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -34,7 +36,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.LocalDateTime;
+
+import static com.example.Blink.config.rabbitconfig.RabbitConstants.*;
+
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +52,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final ImageService imageService;
+    private final RabbitTemplate rabbitTemplate;
 
     private static final String DEFAULT_ROLE = "USER";
 
@@ -66,6 +73,16 @@ public class UserService {
         user.setActive(false);
         user.setVerificationCode(generateConfirmationCode());
         User savedUser = userRepository.save(user);
+
+        UserRegisteredEvent userRegisteredEvent = new UserRegisteredEvent(
+                savedUser.getUserId(),
+                savedUser.getEmail(),
+                savedUser.getUsername(),
+                savedUser.getFullName(),
+                savedUser.getVerificationCode(),
+                Instant.now()
+        );
+        rabbitTemplate.convertAndSend(AUTH_EXCHANGE, USER_REGISTERED_KEY, userRegisteredEvent);
         return userMapper.toResponse(savedUser);
     }
 

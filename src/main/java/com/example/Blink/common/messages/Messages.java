@@ -75,6 +75,11 @@ public class Messages {
     //========================= Mail =========================
 
     public static final String FAILED_EMAIL = "Failed to send email, please try again later";
+    public static final String RESET_PASSWORD = "Reset your password";
+    public static final String RESEND_CODE = "A new verification code has been sent to your email.";
+    public static final String MAIL_CHANGE = "Verify Your Email Change";
+    public static final String WELCOME_MAIL = "Welcome to Blink!";
+    public static final String VERIFY_EMAIL = "Verify your email";
 
     //========================= Image =========================
 

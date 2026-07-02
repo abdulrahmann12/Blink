@@ -3,6 +3,7 @@ package com.example.Blink.auth.service;
 import com.example.Blink.auth.dto.AuthResponse;
 import com.example.Blink.auth.dto.LoginRequestDTO;
 import com.example.Blink.auth.dto.RefreshTokenRequest;
+import com.example.Blink.common.events.UserRegisteredEvent;
 import com.example.Blink.exception.*;
 import com.example.Blink.jwt.RefreshTokenProperties;
 import com.example.Blink.jwt.entity.Token;
@@ -14,6 +15,7 @@ import com.example.Blink.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -21,9 +23,11 @@ import org.springframework.validation.annotation.Validated;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
+import static com.example.Blink.config.rabbitconfig.RabbitConstants.*;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +38,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenRepository tokenRepository;
     private final RefreshTokenProperties refreshTokenProperties;
+    private final RabbitTemplate rabbitTemplate;
 
     @Transactional
     public AuthResponse login(@Valid LoginRequestDTO loginRequestDTO) {
@@ -80,6 +85,16 @@ public class AuthService {
         }
         user.setActive(true);
         user.setVerificationCode(null);
+
+        UserRegisteredEvent userRegisteredEvent = new UserRegisteredEvent(
+                user.getUserId(),
+                user.getEmail(),
+                user.getUsername(),
+                user.getFullName(),
+                null,
+                Instant.now()
+        );
+        rabbitTemplate.convertAndSend(AUTH_EXCHANGE,USER_EMAIL_VERIFIED_KEY,userRegisteredEvent);
     }
 
     private String generateRefreshToken() {

@@ -8,4 +8,7 @@ public class MailSendingException extends RuntimeException {
         super(Messages.FAILED_EMAIL);
     }
 
+    public MailSendingException(Throwable cause) {
+        super(Messages.FAILED_EMAIL, cause);
+    }
 }

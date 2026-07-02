@@ -11,7 +11,7 @@ public interface BlockedUrlMapper {
 
     BlockedUrlResponse toBlockedUrlResponse(BlockedUrl blockedUrl);
 
-    @Mapping(target = "BlockedUrlId", ignore = true)
+    @Mapping(target = "blockedUrlId", ignore = true)
     @Mapping(target = "blockedAt", ignore = true)
     BlockedUrl toEntity(CreateBlockedUrlRequest request);
 }
