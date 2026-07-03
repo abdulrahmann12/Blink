@@ -99,8 +99,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.equals("/api/v1/auth/verify-account")
                 || path.equals("/api/v1/users/register")
                 || path.equals("/api/v1/auth/refresh-token")
-                || path.equals("/api/v1/auth/forgot-password")
                 || path.equals("/api/v1/auth/reset-password")
+                || path.equals("/api/v1/auth/regenerate-code")
+                || path.equals("/api/v1/auth/forget-password")
                 || path.equals("/api/v1/auth/logout")
                 || (path.matches("/api/v1/urls/[^/]+") && "GET".equals(request.getMethod()))        // GET /{shortCode}
                 || (path.matches("/api/v1/urls/[^/]+/unlock") && "POST".equals(request.getMethod())) // POST /{shortCode}/unlock

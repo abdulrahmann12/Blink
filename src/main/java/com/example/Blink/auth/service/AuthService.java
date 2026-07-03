@@ -1,21 +1,28 @@
 package com.example.Blink.auth.service;
 
-import com.example.Blink.auth.dto.AuthResponse;
-import com.example.Blink.auth.dto.LoginRequestDTO;
-import com.example.Blink.auth.dto.RefreshTokenRequest;
+import com.example.Blink.auth.dto.*;
+import com.example.Blink.common.dto.ChangePasswordRequest;
+import com.example.Blink.common.events.CodeRegeneratedEvent;
+import com.example.Blink.common.events.PasswordResetRequestedEvent;
 import com.example.Blink.common.events.UserRegisteredEvent;
 import com.example.Blink.exception.*;
 import com.example.Blink.jwt.RefreshTokenProperties;
 import com.example.Blink.jwt.entity.Token;
 import com.example.Blink.jwt.repository.TokenRepository;
 import com.example.Blink.jwt.service.JwtService;
+import com.example.Blink.role.repository.RoleRepository;
+import com.example.Blink.security.AuthenticatedUserService;
+import com.example.Blink.user.dto.CreateUserRequest;
+import com.example.Blink.user.dto.UserResponse;
 import com.example.Blink.user.dto.VerifyAccountRequest;
 import com.example.Blink.user.entity.User;
+import com.example.Blink.user.mapper.UserMapper;
 import com.example.Blink.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -34,11 +41,47 @@ import static com.example.Blink.config.rabbitconfig.RabbitConstants.*;
 @Validated
 public class AuthService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final RoleRepository roleRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final TokenRepository tokenRepository;
     private final RefreshTokenProperties refreshTokenProperties;
     private final RabbitTemplate rabbitTemplate;
+    private final AuthenticatedUserService authenticatedUserService;
+
+    private static final String DEFAULT_ROLE = "USER";
+
+    @Transactional
+    @CacheEvict(value = "users", allEntries = true)
+    public UserResponse createUser(@Valid CreateUserRequest createUserRequest){
+        if(userRepository.existsByEmail(createUserRequest.getEmail())){
+            throw new EmailAlreadyExistsException();
+        }
+        if(userRepository.existsByUsername(createUserRequest.getUsername())){
+            throw new UsernameAlreadyExistsException();
+        }
+        User user = userMapper.toEntity(createUserRequest);
+        user.setPasswordHash(passwordEncoder.encode(createUserRequest.getPassword()));
+        user.setRole(roleRepository.findByRoleName(DEFAULT_ROLE).orElseThrow(RoleNotFoundException::new));
+        user.setEmail(createUserRequest.getEmail().trim().toLowerCase());
+        user.setUsername(createUserRequest.getUsername().trim().toLowerCase());
+        user.setActive(false);
+        user.setVerificationCode(generateConfirmationCode());
+        User savedUser = userRepository.save(user);
+
+        UserRegisteredEvent userRegisteredEvent = new UserRegisteredEvent(
+                savedUser.getUserId(),
+                savedUser.getEmail(),
+                savedUser.getUsername(),
+                savedUser.getFullName(),
+                savedUser.getVerificationCode(),
+                Instant.now()
+        );
+        rabbitTemplate.convertAndSend(AUTH_EXCHANGE, USER_REGISTERED_KEY, userRegisteredEvent);
+        return userMapper.toResponse(savedUser);
+    }
+
 
     @Transactional
     public AuthResponse login(@Valid LoginRequestDTO loginRequestDTO) {
@@ -95,6 +138,70 @@ public class AuthService {
                 Instant.now()
         );
         rabbitTemplate.convertAndSend(AUTH_EXCHANGE,USER_EMAIL_VERIFIED_KEY,userRegisteredEvent);
+    }
+
+    @Transactional
+    public void reGenerateCode(@Valid EmailRequestDTO emailRequestDTO){
+        User user = userRepository.findByUsernameOrEmailWithRole(emailRequestDTO.getUsernameOrEmail())
+                .orElseThrow(UserNotFoundException::new);
+        String newCode = generateConfirmationCode();
+        user.setVerificationCode(newCode);
+
+        CodeRegeneratedEvent codeRegeneratedEvent = new CodeRegeneratedEvent(
+                user.getEmail(),
+                user.getUsername(),
+                newCode,
+                Instant.now()
+        );
+        rabbitTemplate.convertAndSend(AUTH_EXCHANGE, CODE_REGENERATED_KEY, codeRegeneratedEvent);
+    }
+
+    @Transactional
+    public void forgetPassword(@Valid EmailRequestDTO emailRequestDTO){
+        User user = userRepository.findByUsernameOrEmailWithRole(emailRequestDTO.getUsernameOrEmail())
+                .orElseThrow(UserNotFoundException::new);
+        String newCode = generateConfirmationCode();
+        user.setVerificationCode(newCode);
+
+        PasswordResetRequestedEvent passwordResetRequestedEvent = new PasswordResetRequestedEvent(
+                user.getUserId(),
+                user.getEmail(),
+                user.getUsername(),
+                newCode,
+                Instant.now()
+        );
+        rabbitTemplate.convertAndSend(AUTH_EXCHANGE, PASSWORD_RESET_KEY, passwordResetRequestedEvent);
+    }
+
+    @Transactional
+    public void changePassword(@Valid ChangePasswordRequest changePasswordRequestDTO){
+
+        User user = authenticatedUserService.getCurrentUser();
+
+        if (!passwordEncoder.matches(changePasswordRequestDTO.getCurrentPassword(), user.getPasswordHash())) {
+            throw new WrongPasswordException();
+        }
+        user.setPasswordHash(passwordEncoder.encode(changePasswordRequestDTO.getNewPassword()));
+    }
+
+    @Transactional
+    public void resetPassword(@Valid ResetPasswordRequestDTO resetPasswordRequestDTO){
+        User user = userRepository.findByUsernameOrEmailWithRole(resetPasswordRequestDTO.getUsernameOrEmail())
+                .orElseThrow(UserNotFoundException::new);
+        String verificationCode = user.getVerificationCode();
+
+        if (verificationCode == null || !verificationCode.equals(resetPasswordRequestDTO.getCode())) {
+            throw new InvalidVerificationCodeException();
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(resetPasswordRequestDTO.getNewPassword()));
+        user.setVerificationCode(null);
+    }
+
+    public String generateConfirmationCode() {
+        SecureRandom random = new SecureRandom();
+        int code = 10000 + random.nextInt(90000);
+        return String.valueOf(code);
     }
 
     private String generateRefreshToken() {

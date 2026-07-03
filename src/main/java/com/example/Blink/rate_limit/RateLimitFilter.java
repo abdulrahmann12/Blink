@@ -66,19 +66,29 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return "REGISTER";
         }
 
+        if (path.equals("/api/v1/auth/regenerate-code")
+                && method.equals("POST")) {
+            return "REGENERATE";
+        }
+
+        if (path.equals("/api/v1/auth/forget-password")
+                && method.equals("POST")) {
+            return "RESET-PASSWORD";
+        }
+
         if (path.equals("/api/v1/urls")
                 && method.equals("POST")) {
             return "CREATE_URL";
         }
 
-        if (path.startsWith("/api/v1/qr-codes/generate")
-                && method.equals("POST")) {
-            return "QR_GENERATE";
-        }
-
         if (path.equals("/api/v1/urls/dashboard")
                 && method.equals("GET")) {
             return "DASHBOARD";
+        }
+
+        if (path.startsWith("/api/v1/qr-codes/generate")
+                && method.equals("POST")) {
+            return "QR_GENERATE";
         }
 
         if (path.endsWith("/stats")

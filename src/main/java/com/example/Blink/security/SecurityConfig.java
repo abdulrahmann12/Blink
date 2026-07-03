@@ -52,8 +52,9 @@ public class SecurityConfig {
                     "/api/v1/auth/login",
                     "/api/v1/users/register",
                     "/api/v1/auth/refresh-token",
-                    "/api/v1/auth/forgot-password",
                     "/api/v1/auth/reset-password",
+                    "/api/v1/auth/regenerate-code",
+                    "/api/v1/auth/forget-password",
                     "/api/v1/auth/verify-account",
                     "/api/v1/auth/logout"
                 ).permitAll()

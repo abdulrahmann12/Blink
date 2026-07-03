@@ -18,7 +18,17 @@ public class SwaggerMessages {
 
     public static final String VERIFY_ACCOUNT = "Verify Account";
     public static final String VERIFY_ACCOUNT_DESC = "Verify a user's account using a verification code sent via email";
+    public static final String REGENERATE_CODE = "Regenerate Verification Code";
+    public static final String REGENERATE_CODE_DESC = "Regenerate a new verification code for a user and send it via email";
 
+    public static final String FORGOT_PASSWORD = "Forgot Password";
+    public static final String FORGOT_PASSWORD_DESC = "Send a password reset email to the user with a reset link or code";
+
+    public static final String RESET_PASSWORD = "Reset Password";
+    public static final String RESET_PASSWORD_DESC = "Send a password reset email to the user with a reset link or code";
+
+    public static final String CHANGE_PASSWORD = "Change Password";
+    public static final String CHANGE_PASSWORD_DESC = "Change the password of the authenticated user by providing the current and new password";
     //========================= URL Tag =========================
 
     public static final String TAG_URL = "URL";

@@ -3,14 +3,12 @@ package com.example.Blink.user.controller;
 import com.example.Blink.common.dto.BaseResponse;
 import com.example.Blink.common.messages.Messages;
 import com.example.Blink.common.messages.SwaggerMessages;
-import com.example.Blink.user.dto.CreateUserRequest;
 import com.example.Blink.user.dto.UpdateUserRequest;
 import com.example.Blink.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +22,6 @@ import java.io.IOException;
 @Tag(name = SwaggerMessages.TAG_USER, description = SwaggerMessages.TAG_USER_DESC)
 public class UserController {
     private final UserService userService;
-
-    @Operation(summary = SwaggerMessages.CREATE_USER, description = SwaggerMessages.CREATE_USER_DESC)
-    @PostMapping("/register")
-    public ResponseEntity<BaseResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new BaseResponse(Messages.USER_CREATED, userService.createUser(request)));
-    }
 
     @Operation(summary = SwaggerMessages.UPDATE_USER, description = SwaggerMessages.UPDATE_USER_DESC)
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")

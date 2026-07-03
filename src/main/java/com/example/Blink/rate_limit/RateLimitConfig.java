@@ -39,6 +39,18 @@ public class RateLimitConfig {
                     Duration.ofMinutes(1)
             ),
 
+            "REGENERATE",
+            new RateLimitRule(
+                    2L,
+                    Duration.ofMinutes(1)
+            ),
+
+            "RESET-PASSWORD",
+            new RateLimitRule(
+                    2L,
+                    Duration.ofMinutes(1)
+            ),
+
             "STATS",
             new RateLimitRule(
                     60L,
