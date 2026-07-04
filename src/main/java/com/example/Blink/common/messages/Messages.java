@@ -73,6 +73,8 @@ public class Messages {
     public static final String ACCOUNT_NOT_VERIFIED = "Account is not verified";
     public static final String VERIFICATION_CODE_REGENERATED = "Verification code regenerated successfully";
     public static final String RESET_SUCCESS = "Password reset successfully";
+    public static final String VERIFICATION_CODE_EXPIRED = "Verification code has expired, please request a new one";
+    public static final String VERIFICATION_CODE_ALREADY_SENT = "A verification code has already been sent, please check your email";
 
     //========================= Mail =========================
 

@@ -86,6 +86,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(VerificationCodeExpiredException.class)
+    public ResponseEntity< BaseResponse> handleVerificationCodeExpired(VerificationCodeExpiredException ex, WebRequest request) {
+        return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.BAD_REQUEST);
+    }
+
 
     // === Business Exceptions === //
 
@@ -119,6 +124,8 @@ public class GlobalExceptionHandler {
             QrCodeAlreadyExistsException.class,
             DomainAlreadyBlockedException.class,
             AccountAlreadyVerifiedException.class,
+            VerificationCodeAlreadySentException.class,
+
     })
     public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.CONFLICT);

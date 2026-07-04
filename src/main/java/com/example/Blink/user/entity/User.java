@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -42,6 +43,8 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean active;
+
+    private Instant verificationCodeExpiresAt;
 
     @CreationTimestamp
     @Column(updatable = false)

@@ -144,9 +144,14 @@ public class AuthService {
     public void reGenerateCode(@Valid EmailRequestDTO emailRequestDTO){
         User user = userRepository.findByUsernameOrEmailWithRole(emailRequestDTO.getUsernameOrEmail())
                 .orElseThrow(UserNotFoundException::new);
+        if (user.getVerificationCodeExpiresAt() != null &&
+                Instant.now().isBefore(user.getVerificationCodeExpiresAt())) {
+
+            throw new VerificationCodeAlreadySentException();
+        }
         String newCode = generateConfirmationCode();
         user.setVerificationCode(newCode);
-
+        user.setVerificationCodeExpiresAt(Instant.now().plusSeconds(5 * 60)); // Code valid for 5 minutes
         CodeRegeneratedEvent codeRegeneratedEvent = new CodeRegeneratedEvent(
                 user.getEmail(),
                 user.getUsername(),
@@ -162,7 +167,7 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
         String newCode = generateConfirmationCode();
         user.setVerificationCode(newCode);
-
+        user.setVerificationCodeExpiresAt(Instant.now().plusSeconds(5 * 60)); // Code valid for 5 minutes
         PasswordResetRequestedEvent passwordResetRequestedEvent = new PasswordResetRequestedEvent(
                 user.getUserId(),
                 user.getEmail(),
@@ -190,17 +195,23 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
         String verificationCode = user.getVerificationCode();
 
+        if(user.getVerificationCodeExpiresAt() == null || Instant.now().isAfter(user.getVerificationCodeExpiresAt())) {
+            user.setVerificationCode(null);
+            user.setVerificationCodeExpiresAt(null);
+            throw new VerificationCodeExpiredException();
+        }
+
         if (verificationCode == null || !verificationCode.equals(resetPasswordRequestDTO.getCode())) {
             throw new InvalidVerificationCodeException();
         }
-
         user.setPasswordHash(passwordEncoder.encode(resetPasswordRequestDTO.getNewPassword()));
         user.setVerificationCode(null);
+        user.setVerificationCodeExpiresAt(null);
     }
 
     public String generateConfirmationCode() {
         SecureRandom random = new SecureRandom();
-        int code = 10000 + random.nextInt(90000);
+        int code = 100000 + random.nextInt(900000);
         return String.valueOf(code);
     }
 
