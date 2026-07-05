@@ -1,5 +1,6 @@
 package com.example.Blink.url.service;
 
+import com.example.Blink.blocked_url.service.BlockedUrlService;
 import com.example.Blink.common.dto.ChangePasswordRequest;
 import com.example.Blink.exception.*;
 import com.example.Blink.security.AuthenticatedUserService;
@@ -41,6 +42,7 @@ public class UrlService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserService authenticatedUserService;
     private final UrlClickService urlClickService;
+    private final BlockedUrlService blockedUrlService;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int SHORT_CODE_LENGTH = 7;
@@ -52,6 +54,9 @@ public class UrlService {
     @CacheEvict(value = "urls", allEntries = true)
     public UrlResponse generateShortUrl(@Valid CreateUrlRequest request){
 
+        if(blockedUrlService.isDomainBlocked(request.getOriginalUrl())) {
+            throw new DomainAlreadyBlockedException();
+        }
         User currentUser = authenticatedUserService.getCurrentUser();
 
         try {
@@ -183,7 +188,7 @@ public class UrlService {
 
         User currentUser = authenticatedUserService.getCurrentUser();
 
-        Url url = urlRepository.findById(urlId)
+        Url url = urlRepository.findByIdWithUser(urlId)
                 .orElseThrow(UrlNotFoundException::new);
 
         if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -226,7 +231,7 @@ public class UrlService {
 
         User currentUser = authenticatedUserService.getCurrentUser();
 
-        Url url = urlRepository.findById(urlId)
+        Url url = urlRepository.findByIdWithUser(urlId)
                 .orElseThrow(UrlNotFoundException::new);
 
         if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -257,7 +262,7 @@ public class UrlService {
 
         User currentUser = authenticatedUserService.getCurrentUser();
 
-        Url url = urlRepository.findById(urlId)
+        Url url = urlRepository.findByIdWithUser(urlId)
                 .orElseThrow(UrlNotFoundException::new);
 
         if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -298,7 +303,7 @@ public class UrlService {
             throw new InvalidNewPasswordException();
         }
 
-        Url url = urlRepository.findById(urlId)
+        Url url = urlRepository.findByIdWithUser(urlId)
                 .orElseThrow(UrlNotFoundException::new);
 
         if (!url.getUser().getUserId().equals(currentUser.getUserId())) {

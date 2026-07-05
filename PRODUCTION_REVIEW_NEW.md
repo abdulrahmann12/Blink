@@ -13,19 +13,10 @@
 
 | PR-007 | **Critical** | URL Shortener | `UrlService.java` | 143-155 | ❌ |
 | PR-008 | **Critical** | Rate Limiting | `RateLimitService.java` | 13 | ❌ |
-| PR-011 | **High** | Security | `SecurityConfig.java` | 49 | ⚠️ |
-| PR-012 | **High** | Database | `AuthService.java` | 58-62 | ⚠️ |
-| PR-013 | **High** | Authentication | `AuthService.java` | 103 | ⚠️ |
-| PR-014 | **High** | URL Shortener | `UrlService.java` | 88-100 | ⚠️ |
-| PR-015 | **High** | Exception Handling | `GlobalExceptionHandler.java` | 153-161 | ⚠️ |
-| PR-016 | **High** | Cache | `CacheConfig.java` | 30 | ⚠️ |
 | PR-017 | **High** | Email | `UserRegisteredConsumer.java` | 22 | ⚠️ |
-| PR-018 | **High** | Database | `UrlService.java` | 188, 228, 259, 300 | ⚠️ |
-| PR-019 | **High** | Security | `JwtService.java` | 29-31 | ⚠️ |
-| PR-020 | **High** | URL Shortener | `UrlService.java` | 63-69 | ⚠️ |
-| PR-021 | **High** | Rate Limiting | `RateLimitFilter.java` | 64-66 | ⚠️ |
-| PR-022 | **High** | Scheduler | `UrlCleanupService.java` | 22-33 | ⚠️ |
-| PR-023 | **High** | Authentication | `AuthService.java` | 144-157 | ⚠️ |
+
+
+
 | PR-024 | **High** | Performance | `AuthenticatedUserService.java` | 33 | ⚠️ |
 | PR-025 | **High** | Security | `application.properties` | 97-99 | ⚠️ |
 | PR-026 | **Medium** | Exception Handling | `GlobalExceptionHandler.java` | 84-87 | ⚠️ |
@@ -59,300 +50,6 @@
 ## Detailed Findings
 
 
-```
-
-
-### PR-011 · High · Security — Swagger UI Publicly Exposed in Production
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/security/SecurityConfig.java
-Line: 49
-File: src/main/resources/application.properties
-Lines: 83-85
-```
-
-**Problem:**
-```java
-.requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
-```
-```properties
-springdoc.swagger-ui.enabled=true
-```
-
-Swagger UI is fully public in production. Any anonymous user can:
-- Discover every endpoint, parameter, and data model
-- Understand token format and auth flows
-- Execute requests directly against the production API
-
-The `SwaggerConfigConfiguration.java` also leaks the developer's personal email address in the API contact section.
-
-**Recommendation:** Set `springdoc.swagger-ui.enabled=${SWAGGER_ENABLED:false}`. Restrict via Spring profile. Remove personal email from Swagger contact.
-
----
-
-### PR-012 · High · Database — Race Condition on User Registration (TOCTOU)
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/auth/service/AuthService.java
-Method: createUser()
-Lines: 58-62
-```
-
-**Problem:** Check-then-act without lock:
-```java
-if(userRepository.existsByEmail(createUserRequest.getEmail())) { throw ... }
-if(userRepository.existsByUsername(createUserRequest.getUsername())) { throw ... }
-// time gap — two concurrent requests can both pass here
-User savedUser = userRepository.save(user);
-```
-
-Two concurrent requests with the same email/username can both pass the existence checks simultaneously. The second `save()` hits the unique constraint and throws `DataIntegrityViolationException`, which is **not handled** in `GlobalExceptionHandler` — surfaces as an unhandled 500.
-
-**Why it fails in production:** Under load or with registration bots, this race is frequently triggered.
-
-**Impact:** Confusing 500 errors for users; unhandled exception propagating to clients.
-
-**Recommendation:** Add `@ExceptionHandler(DataIntegrityViolationException.class)` to `GlobalExceptionHandler` mapping to 409 Conflict.
-
----
-
-### PR-013 · High · Authentication — Refresh Token Expiry Uses LocalDateTime (Timezone Unsafe)
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/auth/service/AuthService.java
-Methods: login(), refreshToken()
-Lines: 103, 247
-```
-
-**Problem:** Refresh token expiry uses `LocalDateTime.now()` — a type with no timezone information:
-```java
-LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(refreshTokenProperties.getExpirationMinutes());
-// ...
-if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-```
-
-If the application server and database server are in different timezones (common in cloud deployments), token expiry comparison becomes unreliable — tokens may expire too early or never expire.
-
-**Recommendation:** Use `Instant` (UTC) everywhere. Change `Token.expiresAt` to `Instant`.
-
----
-
-### PR-014 · High · URL Shortener — Short Code Collision Throws Raw RuntimeException
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/service/UrlService.java
-Method: generateUniqueShortCode()
-Lines: 88-100
-```
-
-**Problem:** After 10 collision-check retries, the method throws:
-```java
-throw new RuntimeException("Failed generating unique code");
-```
-
-This is caught by the generic `RuntimeException` handler in `GlobalExceptionHandler` and returned as a generic 500. No logging exists to trace this failure. Additionally, each retry queries the database (`existsByShortUrl`) — up to 10 database round-trips — while holding a write transaction, increasing connection hold time and latency.
-
-**Impact:** Silent 500 failures with no root cause logged; increased DB pressure under collision.
-
-**Recommendation:** Use a custom `ShortCodeExhaustedException` with `log.error()` when retries are exhausted. Consider sequence-based generation to eliminate collisions.
-
----
-
-### PR-015 · High · Exception Handling — UnauthorizedException Returns HTTP 409 (Should be 403)
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/exception/GlobalExceptionHandler.java
-Lines: 153-161
-```
-
-**Problem:**
-```java
-@ExceptionHandler(UnauthorizedActionException.class)
-public ResponseEntity<BaseResponse> handleUnauthorizedAction(...) {
-    return buildErrorResponse(ex, request, HttpStatus.CONFLICT);  // WRONG: should be 403
-}
-@ExceptionHandler(UnauthorizedException.class)
-public ResponseEntity<BaseResponse> handleUnauthorizedException(...) {
-    return buildErrorResponse(ex, request, HttpStatus.CONFLICT);  // WRONG: should be 403
-}
-```
-
-Authorization failures should return HTTP 403 Forbidden. HTTP 409 is for data conflicts (duplicate resource, etc.). Every ownership check failure in the application (`url.getUser() != currentUser`) currently returns 409 to the client.
-
-**Impact:** API clients cannot distinguish authorization failures from data conflicts. Frontend error handling is broken. REST semantics violated.
-
-**Recommendation:** Change both handlers to `HttpStatus.FORBIDDEN`.
-
----
-
-### PR-016 · High · Cache — Duplicate qrCodes Cache Definition
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/config/CacheConfig.java
-Lines: 29-30
-```
-
-**Problem:**
-```java
-buildCache("qrCodes", 10, TimeUnit.MINUTES, 5_000),   // line 29
-buildCache("qrCodes", 10, TimeUnit.MINUTES, 10_000),  // line 30 — duplicate!
-```
-
-`SimpleCacheManager` returns the first matching cache by name. The second definition is dead code. The intended max size is accidentally determined by list order rather than explicit intent.
-
-**Recommendation:** Remove the duplicate entry. Choose the correct max size (5,000 or 10,000).
-
----
-
-### PR-017 · High · Email / RabbitMQ — No Dead-Letter Queue; Emails Silently Dropped
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/common/consumer/UserRegisteredConsumer.java
-Line: 22
-File: src/main/java/com/example/Blink/config/rabbitconfig/AuthRabbitConfig.java
-All queue declarations
-```
-
-**Problem:** All RabbitMQ queues are declared without Dead-Letter Exchange (DLX):
-```java
-return new Queue(RabbitConstants.USER_REGISTERED_QUEUE); // No DLX config
-```
-
-`spring.rabbitmq.listener.simple.default-requeue-rejected=false` means after 3 failed retries, messages are **nacked and discarded** — never moved to a DLQ. Emails are permanently lost with no alerting or recovery.
-
-Additionally, `UserVerifiedConsumer.java` line 22: `throw new MailSendingException()` (no-arg) loses the original exception's details.
-
-**Impact:** Users never receive verification/reset emails. Silent data loss. No operational visibility.
-
-**Recommendation:** Configure DLX and DLQ for all queues. Implement DLQ consumer with alerting. Fix `throw new MailSendingException()` → `throw new MailSendingException(e)`.
-
----
-
-### PR-018 · High · Database — LAZY Loading in Transactional Methods Without JOIN FETCH
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/service/UrlService.java
-Methods: toggleStatus(), updateUrl(), removePassword(), changePassword()
-Lines: 181-193, 222-251, 253-268, 289-319
-```
-
-**Problem:** Multiple methods load `Url` via `urlRepository.findById(urlId)` then access `url.getUser().getUserId()` for ownership checks. Since `Url.user` is `FetchType.LAZY`, this triggers a separate SQL query for each ownership check — hidden N+1 behavior in the hot path.
-
-The `findByIdWithUser(urlId)` method in `UrlRepository` (line 76-82) already does `JOIN FETCH u.user`, but these methods don't use it.
-
-**Recommendation:** Replace `urlRepository.findById(urlId)` with `urlRepository.findByIdWithUser(urlId)` in all methods that access `url.getUser()`.
-
----
-
-### PR-019 · High · Security — JWT Secret Key Derived from ASCII Byte Encoding
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/jwt/service/JwtService.java
-Method: getSignKey()
-Lines: 29-31
-```
-
-**Problem:**
-```java
-return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-```
-
-The `secret` property is a hex string (`3c9d4f0b1e284b8b...`). `getBytes(UTF_8)` converts each hex character to its ASCII byte value — producing 64 bytes of ASCII values 48-57 and 97-102 (ASCII for 0-9 and a-f), not the 32 cryptographically random bytes the hex string represents. Effective key entropy is significantly lower than intended. Additionally, this committed secret must be considered compromised (see PR-002).
-
-**Recommendation:** Decode the hex secret to actual bytes, or generate a new Base64-encoded 32-byte random key and decode with `Base64.getDecoder().decode(secret)`. Rotate immediately.
-
----
-
-### PR-020 · High · URL Shortener — Blocked Domain Check Missing from URL Creation
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/service/UrlService.java
-Method: generateShortUrl()
-Lines: 63-85
-```
-
-**Problem:** The URL creation flow never checks whether the original URL's domain is in the blocked list. The `BlockedUrlService.isDomainBlocked()` exists and is cached, but is **never called** from `UrlService.generateShortUrl()`. A user can shorten `https://malware-site.com/payload` even if that domain is explicitly blocked by an admin.
-
-Additionally, custom aliases are not validated against reserved path segments (`my`, `check`, `dashboard`, `id`) that would conflict with existing API routes. An alias of `"my"` would create `https://blink.ly/my` which shadows the user's URL list endpoint.
-
-**Recommendation:** (1) Call `blockedUrlService.isDomainBlocked()` on the original URL's domain in `generateShortUrl()`. (2) Maintain a reserved alias set and reject aliases matching existing route path segments.
-
-**Evidence:**
-```java
-// UrlService.java lines 67-69 — only uniqueness check, no blocked-domain check
-if(alias != null && urlRepository.existsByCustomAlias(alias)){
-    throw new AliasAlreadyUsed();
-}
-// No: if(blockedUrlService.isDomainBlocked(extractDomain(request.getOriginalUrl()))) { ... }
-```
-
----
-
-### PR-021 · High · Rate Limiting — Register Endpoint Path Mismatch; Dead SecurityConfig Entry
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/rate_limit/RateLimitFilter.java
-Lines: 64-67
-File: src/main/java/com/example/Blink/security/SecurityConfig.java
-Line: 53
-```
-
-**Problem:** `RateLimitFilter.resolveRule()` correctly targets `POST /api/v1/auth/register` for the REGISTER rate rule. However, `SecurityConfig.java` line 53 permits `/api/v1/users/register` — a path that **does not exist** in any controller. The actual registration endpoint is `POST /api/v1/auth/register` (per `AuthController.java`). This stale config entry permits a non-existent endpoint while potentially confusing security audits and tooling.
-
-**Impact:** Dead security config creates maintenance confusion; any future route at `/api/v1/users/register` would be automatically public without intentional configuration.
-
-**Recommendation:** Remove the stale `/api/v1/users/register` entry from `SecurityConfig`.
-
----
-
-### PR-022 · High · Scheduler — URL Cleanup: External API Calls Inside Transaction, No Cascade for UrlClicks
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/scheduler/service/UrlCleanupService.java
-Method: removeExpiredUrls()
-Lines: 22-33
-```
-
-**Problem:**
-
-1. **External API in transaction:** The entire cleanup runs in a single `@Transactional` method. `imageService.deleteImage()` (Cloudinary API) is called inside the transaction. If Cloudinary fails mid-loop, the DB transaction rolls back — but Cloudinary deletions from earlier iterations are **not** rolled back. Next run tries to delete already-deleted images → `ImageDeletedException` → cleanup fails permanently.
-
-2. **N+1 Cloudinary API calls in transaction:** For each URL, a Cloudinary HTTP call is made while holding a DB connection. With many expired URLs, this holds connections for the total sum of all API call durations, potentially exhausting the connection pool.
-
-3. **UrlClick orphans:** When `urlRepository.delete(url)` is called, associated `UrlClick` records are not deleted (no cascade, no explicit delete). Orphaned click data accumulates indefinitely.
-
-4. **No logging:** No log statements to track cleanup progress or failures.
-
-**Recommendation:** Process in batches; delete Cloudinary images outside transaction boundary; add `urlClickRepository.deleteByUrl_UrlId(url.getUrlId())` before URL delete; add `log.info()`/`log.error()` statements.
-
----
-
-### PR-023 · High · Authentication — reGenerateCode() Allows Code Reset for Active Accounts
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/auth/service/AuthService.java
-Method: reGenerateCode()
-Lines: 143-157
-```
-
-**Problem:** `reGenerateCode()` does not check whether the account is already active. An already-verified user can call this endpoint, receiving a new verification code. This code is then stored in `user.verificationCode` on a live account. Because `resetPassword()` only checks `verificationCode` equality (not purpose), this regenerated code can be used to reset the user's password without going through `forgetPassword()`.
-
-**Recommendation:** Add `if (user.isActive()) { throw new AccountAlreadyVerifiedException(); }` at the beginning of `reGenerateCode()`.
-
----
 
 ### PR-024 · High · Performance — getCurrentUser() Issues DB Query on Every Authenticated Request
 
@@ -927,6 +624,35 @@ Three production-critical failures:
 // RateLimitService.java line 13 — unbounded, non-distributed, non-persistent
 private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 ```
+
+
+```
+
+
+### PR-017 · High · Email / RabbitMQ — No Dead-Letter Queue; Emails Silently Dropped
+
+**Location:**
+```
+File: src/main/java/com/example/Blink/common/consumer/UserRegisteredConsumer.java
+Line: 22
+File: src/main/java/com/example/Blink/config/rabbitconfig/AuthRabbitConfig.java
+All queue declarations
+```
+
+**Problem:** All RabbitMQ queues are declared without Dead-Letter Exchange (DLX):
+```java
+return new Queue(RabbitConstants.USER_REGISTERED_QUEUE); // No DLX config
+```
+
+`spring.rabbitmq.listener.simple.default-requeue-rejected=false` means after 3 failed retries, messages are **nacked and discarded** — never moved to a DLQ. Emails are permanently lost with no alerting or recovery.
+
+Additionally, `UserVerifiedConsumer.java` line 22: `throw new MailSendingException()` (no-arg) loses the original exception's details.
+
+**Impact:** Users never receive verification/reset emails. Silent data loss. No operational visibility.
+
+**Recommendation:** Configure DLX and DLQ for all queues. Implement DLQ consumer with alerting. Fix `throw new MailSendingException()` → `throw new MailSendingException(e)`.
+
+---
 
 ---
 

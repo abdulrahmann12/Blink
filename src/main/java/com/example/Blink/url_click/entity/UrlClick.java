@@ -28,7 +28,7 @@ public class UrlClick {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long clickId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "url_id", nullable = false)
     private Url url;
 

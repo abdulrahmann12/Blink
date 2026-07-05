@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/urls/{shortCode}").permitAll()
                 .requestMatchers("/api/v1/urls/{shortCode}/unlock").permitAll()
                 .requestMatchers("/api/v1/urls/check").permitAll()
+                    .requestMatchers("/actuator/**").hasRole("ADMIN")
                 // Everything else requires auth
                 .anyRequest().authenticated()
             )

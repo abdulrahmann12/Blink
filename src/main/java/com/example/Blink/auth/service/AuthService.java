@@ -144,6 +144,9 @@ public class AuthService {
     public void reGenerateCode(@Valid EmailRequestDTO emailRequestDTO){
         User user = userRepository.findByUsernameOrEmailWithRole(emailRequestDTO.getUsernameOrEmail())
                 .orElseThrow(UserNotFoundException::new);
+        if (!user.isActive()) {
+            throw new UserNotActiveException();
+        }
         if (user.getVerificationCodeExpiresAt() != null &&
                 Instant.now().isBefore(user.getVerificationCodeExpiresAt())) {
 
