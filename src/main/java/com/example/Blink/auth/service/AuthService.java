@@ -165,6 +165,9 @@ public class AuthService {
     public void forgetPassword(@Valid EmailRequestDTO emailRequestDTO){
         User user = userRepository.findByUsernameOrEmailWithRole(emailRequestDTO.getUsernameOrEmail())
                 .orElseThrow(UserNotFoundException::new);
+        if(!user.isActive()){
+            throw new UserNotActiveException();
+        }
         String newCode = generateConfirmationCode();
         user.setVerificationCode(newCode);
         user.setVerificationCodeExpiresAt(Instant.now().plusSeconds(5 * 60)); // Code valid for 5 minutes

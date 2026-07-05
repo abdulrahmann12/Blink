@@ -163,6 +163,7 @@ public class UrlService {
         }
     }
 
+    @Transactional
     public UrlResponse getUrlStats(String shortCode) {
         User currentUser = authenticatedUserService.getCurrentUser();
 

@@ -10,6 +10,7 @@ public class ValidationMessages {
     public static final String URL_TOO_LONG = "URL must not exceed 2048 characters";
     public static final String ALIAS_TOO_LONG = "Custom alias must not exceed 100 characters";
     public static final String EXPIRE_DATE_FUTURE = "Expiry date must be in the future";
+    public static final String ALIAS_FORMAT_INVALID = "Custom alias must be exactly 7 alphanumeric characters";
 
 
     //========================= Block URL =========================

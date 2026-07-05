@@ -2,6 +2,7 @@ package com.example.Blink.url.entity;
 
 import com.example.Blink.user.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,7 +33,8 @@ public class Url {
 
     private String title;
 
-    @Column(unique = true, length = 100)
+    @Column(unique = true, length = 7)
+    @Pattern(regexp = "^[A-Za-z0-9]{7}$")
     private String customAlias;
 
     private boolean passwordProtected;

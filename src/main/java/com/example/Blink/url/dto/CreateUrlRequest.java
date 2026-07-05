@@ -3,6 +3,7 @@ package com.example.Blink.url.dto;
 import com.example.Blink.common.messages.ValidationMessages;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,7 +25,10 @@ public class CreateUrlRequest {
     @NotBlank(message = ValidationMessages.TITLE_NOT_BLANK)
     private String title;
 
-    @Size(max = 100, message = ValidationMessages.ALIAS_TOO_LONG)
+    @Pattern(
+            regexp = "^$|^[A-Za-z0-9]{7}$",
+            message = ValidationMessages.ALIAS_FORMAT_INVALID
+    )
     private String customAlias;
 
     private String password;

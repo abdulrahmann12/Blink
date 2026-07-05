@@ -9,7 +9,8 @@
 
 | ID | Severity | Module | File | Line | Status |
 |:---|:---------|:-------|:-----|:-----|:-------|
-| PR-005 | **Critical** | Authentication | `AuthService.java` | 160-174 | ❌ |
+
+
 | PR-006 | **Critical** | Security | `JwtAuthenticationFilter.java` | 88-109 | ❌ |
 | PR-007 | **Critical** | URL Shortener | `UrlService.java` | 143-155 | ❌ |
 | PR-008 | **Critical** | Rate Limiting | `RateLimitService.java` | 13 | ❌ |
@@ -60,49 +61,7 @@
 
 ## Detailed Findings
 
----
 
-
-
-
-### PR-005 · Critical · Authentication — Password Reset Codes Never Expire
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/auth/service/AuthService.java
-Methods: forgetPassword(), resetPassword()
-Lines: 159-174, 187-199
-```
-
-**Problem:** The password reset flow issues a 5-digit numeric code (10000-99999) and stores it in `user.verificationCode`. There is **no expiration timestamp** for this code. Once a code is issued, it remains valid indefinitely until used.
-
-Full attack flow:
-1. Attacker calls `POST /api/v1/auth/forget-password` with victim's email.
-2. Intercepts or acquires the code (email interception, past breach, etc.).
-3. The code never expires — attacker can use it hours, days, or weeks later.
-4. Attacker resets the victim's password at leisure.
-
-Additionally, the code is only 5 digits (90,000 combinations). The rate limit on the reset endpoint is 2 requests/minute per IP — insufficient against distributed brute-force.
-
-**Why it passes in development:** Codes are used immediately during testing.
-
-**Impact:** Account takeover for any user whose reset code has been intercepted or brute-forced.
-
-**Recommendation:** Add `verificationCodeExpiresAt` (Instant/UTC) to `User`. Set to `Instant.now().plus(15, ChronoUnit.MINUTES)` on code generation. Check expiry in `resetPassword()`. Null out both fields after use.
-
-**Evidence:**
-```java
-// forgetPassword() lines 163-164: no expiry set
-String newCode = generateConfirmationCode();
-user.setVerificationCode(newCode);  // No expiresAt set!
-
-// resetPassword() lines 191-198: no expiry checked
-if (verificationCode == null || !verificationCode.equals(resetPasswordRequestDTO.getCode())) {
-    throw new InvalidVerificationCodeException();
-}
-// No expiry check — valid forever
-user.setPasswordHash(passwordEncoder.encode(resetPasswordRequestDTO.getNewPassword()));
-user.setVerificationCode(null);
 ```
 
 ---

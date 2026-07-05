@@ -55,8 +55,7 @@ public class SecurityConfig {
                     "/api/v1/auth/reset-password",
                     "/api/v1/auth/regenerate-code",
                     "/api/v1/auth/forget-password",
-                    "/api/v1/auth/verify-account",
-                    "/api/v1/auth/logout"
+                    "/api/v1/auth/verify-account"
                 ).permitAll()
                 // Public URL redirect & check
                 .requestMatchers("/api/v1/urls/{shortCode}").permitAll()

@@ -87,12 +87,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        if (path.equals("/api/v1/urls/my")
-                || path.startsWith("/api/v1/urls/id/")
-                || path.equals("/api/v1/urls/check")
-                || path.equals("/api/v1/urls/dashboard")) {
-            return false;
-        }
         return path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui")
                 || path.equals("/api/v1/auth/login")
@@ -102,9 +96,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.equals("/api/v1/auth/reset-password")
                 || path.equals("/api/v1/auth/regenerate-code")
                 || path.equals("/api/v1/auth/forget-password")
-                || path.equals("/api/v1/auth/logout")
-                || (path.matches("/api/v1/urls/[^/]+") && "GET".equals(request.getMethod()))        // GET /{shortCode}
-                || (path.matches("/api/v1/urls/[^/]+/unlock") && "POST".equals(request.getMethod())) // POST /{shortCode}/unlock
+                || (path.matches("/api/v1/urls/[A-Za-z0-9]{7}") && "GET".equals(request.getMethod()))
+                || (path.matches("/api/v1/urls/[A-Za-z0-9]{7}/unlock") && "POST".equals(request.getMethod()))
                 || (path.equals("/api/v1/urls/check") && "GET".equals(request.getMethod()));         // GET /check
     }
 }
