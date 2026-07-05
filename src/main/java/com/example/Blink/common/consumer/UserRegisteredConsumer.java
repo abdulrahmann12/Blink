@@ -19,7 +19,7 @@ public class UserRegisteredConsumer {
         try {
             emailService.sendVerificationMail(event, Messages.VERIFY_EMAIL);
         } catch (Exception e) {
-            throw new MailSendingException();
+            throw new MailSendingException(e);
         }
     }
 

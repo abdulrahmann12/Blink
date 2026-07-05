@@ -26,7 +26,6 @@ public class CacheConfig {
                 // ── MEDIUM volatility: normal TTL ──
                 buildCache("users",          10, TimeUnit.MINUTES, 5_000),
                 buildCache("urls",           10, TimeUnit.MINUTES, 10_000),
-                buildCache("qrCodes",        10, TimeUnit.MINUTES, 5_000),
                 buildCache("qrCodes",10, TimeUnit.MINUTES, 10_000),
 
                 // ── SHORT TTL: high-frequency lookups that must stay fresh ──

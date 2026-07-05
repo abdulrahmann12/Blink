@@ -5,6 +5,7 @@ import com.example.Blink.common.messages.Messages;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -159,14 +160,20 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedActionException.class)
     public ResponseEntity< BaseResponse> handleUnauthorizedAction(UnauthorizedActionException ex, WebRequest request) {
-        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
+        return buildErrorResponse(ex, request, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity< BaseResponse> handleUnauthorizedException(UnauthorizedException ex, WebRequest request) {
-        return buildErrorResponse(ex, request, HttpStatus.CONFLICT);
+        return buildErrorResponse(ex, request, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(ShortCodeExhaustedException.class)
+    public ResponseEntity<BaseResponse> handleShortCodeExhausted(
+            ShortCodeExhaustedException ex,
+            WebRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
     // === Validation Exceptions === //
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -223,6 +230,14 @@ public class GlobalExceptionHandler {
                 .orElse("Validation failed");
         return buildErrorResponse(firstError, request, HttpStatus.BAD_REQUEST);
 
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<BaseResponse> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new BaseResponse(Messages.EMAIL_ALREADY_OR_USERNAME_EXISTS));
     }
 
     // === Fallback Exceptions === //

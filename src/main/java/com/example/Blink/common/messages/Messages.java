@@ -29,6 +29,8 @@ public class Messages {
     public static final String PASSWORD_REMOVED = "Password removed successfully";
     public static final String DASHBOARD_FETCHED = "Dashboard data retrieved successfully";
     public static final String PASSWORD_CHANGED = "Password changed successfully";
+    public static final String SHORT_CODE_EXHAUSTED = "All possible short codes have been exhausted. Please try again later.";
+
     //========================= User =========================
 
     public static final String USER_CREATED = "User created successfully";
@@ -43,6 +45,7 @@ public class Messages {
     public static final String USER_ALREADY_DEACTIVATED = "This user account is already deactivated";
     public static final String USER_ALREADY_ACTIVATED = "This user account is already activated";
     public static final String EMAIL_ALREADY_EXISTS = "Email already exists";
+    public static final String EMAIL_ALREADY_OR_USERNAME_EXISTS = "Email or Username already exists";
     public static final String USERNAME_ALREADY_EXISTS = "Username already exists";
 
     //========================= Role =========================

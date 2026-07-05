@@ -100,7 +100,7 @@ public class AuthService {
         String refreshToken = generateRefreshToken();
         String hashedRefresh = hashToken(refreshToken);
 
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(refreshTokenProperties.getExpirationMinutes());
+        Instant expiresAt = Instant.now().plus(refreshTokenProperties.getExpirationMinutes());
 
         tokenRepository.revokeAllRefreshTokensByUser(user.getUserId());
 
@@ -244,7 +244,7 @@ public class AuthService {
             throw new InvalidTokenException();
         }
 
-        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (token.getExpiresAt().isBefore(Instant.now())) {
             token.setExpired(true);
             tokenRepository.save(token);
             throw new InvalidTokenException();
@@ -258,7 +258,7 @@ public class AuthService {
         String newAccessToken = jwtService.generateToken(user);
         String newRefreshToken = generateRefreshToken();
         String hashedNew = hashToken(newRefreshToken);
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(refreshTokenProperties.getExpirationMinutes());
+        Instant expiresAt = Instant.now().plus(refreshTokenProperties.getExpirationMinutes());
 
         // Rotate refresh token — revoke old, save new
         token.setRevoked(true);

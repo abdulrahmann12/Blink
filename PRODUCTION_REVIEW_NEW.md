@@ -11,11 +11,8 @@
 |:---|:---------|:-------|:-----|:-----|:-------|
 
 
-| PR-006 | **Critical** | Security | `JwtAuthenticationFilter.java` | 88-109 | ❌ |
 | PR-007 | **Critical** | URL Shortener | `UrlService.java` | 143-155 | ❌ |
 | PR-008 | **Critical** | Rate Limiting | `RateLimitService.java` | 13 | ❌ |
-| PR-009 | **Critical** | Password Reset | `AuthService.java` | 188-199 | ❌ |
-| PR-010 | **Critical** | Production Readiness | `BlinkApplication.java` | 13-14 | ❌ |
 | PR-011 | **High** | Security | `SecurityConfig.java` | 49 | ⚠️ |
 | PR-012 | **High** | Database | `AuthService.java` | 58-62 | ⚠️ |
 | PR-013 | **High** | Authentication | `AuthService.java` | 103 | ⚠️ |
@@ -64,171 +61,6 @@
 
 ```
 
----
-
-### PR-006 · Critical · Security — JWT Filter Bypass Logic Fragile and Collision-Prone
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/security/JwtAuthenticationFilter.java
-Method: shouldNotFilter()
-Lines: 88-109
-```
-
-**Problem:** `shouldNotFilter()` uses regex `path.matches("/api/v1/urls/[^/]+")` with a GET method check to skip the JWT filter for the short URL redirect endpoint. However, this regex also matches:
-- `GET /api/v1/urls/my` (user's own URL list — should require auth)
-- `GET /api/v1/urls/check` (URL check — public, correctly no auth)
-- `GET /api/v1/urls/dashboard` (dashboard — should require auth)
-
-Lines 90-94 attempt to re-exclude specific paths:
-```java
-if (path.equals("/api/v1/urls/my") || path.startsWith("/api/v1/urls/id/") ...)
-    return false;
-```
-
-This creates a dual-maintenance fragility: every new authenticated URL route must be added to both the security config AND the `shouldNotFilter()` exclusion list. Missing either causes silent authentication bypass.
-
-**Why it fails in production:** Any future authenticated route added to `UrlController` without updating `shouldNotFilter()` may silently skip JWT validation.
-
-**Impact:** Potential authentication bypass; ongoing maintenance landmine.
-
-**Recommendation:** Remove `shouldNotFilter()` entirely. Use Spring Security's `requestMatchers()` in `SecurityConfig` as the single source of truth. The JWT filter should always run.
-
-**Evidence:**
-```java
-// Line 106 — regex matches /api/v1/urls/my, /api/v1/urls/check, /api/v1/urls/dashboard
-|| (path.matches("/api/v1/urls/[^/]+") && "GET".equals(request.getMethod()))
-// Lines 90-93 attempt to fix this — dual maintenance required
-```
-
----
-
-### PR-007 · Critical · URL Shortener — Server-Side Request Forgery (SSRF)
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/service/UrlService.java
-Method: checkUrl()
-Lines: 143-155
-File: src/main/java/com/example/Blink/security/SecurityConfig.java
-Line: 64
-```
-
-**Problem:** The `checkUrl()` method opens an HTTP connection to any URL provided by the user with no allowlist validation:
-```java
-URL url = URI.create(rawUrl).toURL();
-HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-connection.setRequestMethod("HEAD");
-connection.setInstanceFollowRedirects(true);
-```
-
-This is a classic SSRF vulnerability. An attacker can:
-1. Probe internal network: `http://192.168.1.1/admin`, `http://10.0.0.1/`
-2. Access cloud metadata: `http://169.254.169.254/latest/meta-data/` (AWS IMDSv1 — returns IAM credentials)
-3. Scan internal ports
-4. Hit internal services behind the firewall
-
-This endpoint is **publicly accessible** — no authentication required (SecurityConfig line 64: `permitAll()`).
-
-**Why it passes in development:** Developer only tests with public URLs; internal network not reachable from dev machine.
-
-**Impact:** Cloud credential exfiltration (IAM role via IMDS), internal service port scanning, privilege escalation. This is one of the highest-impact vulnerabilities in the codebase.
-
-**Recommendation:** (1) Allowlist only `http://` and `https://` schemes. (2) Resolve hostname; block RFC-1918 ranges (10.x, 172.16-31.x, 192.168.x), loopback (127.x, ::1), link-local (169.254.x), cloud metadata IPs. (3) Consider removing or restricting to authenticated users.
-
-**Evidence:**
-```java
-// UrlService.java lines 144-154 — no IP or scheme validation
-URL url = URI.create(rawUrl).toURL();
-HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-connection.setInstanceFollowRedirects(true);  // Follows redirects — bypasses naive host checks
-return connection.getResponseCode() < 400;
-
-// SecurityConfig.java line 64 — publicly accessible
-.requestMatchers("/api/v1/urls/check").permitAll()
-```
-
----
-
-### PR-008 · Critical · Rate Limiting — In-Memory Buckets Cause OOM and Multi-Instance Bypass
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/rate_limit/RateLimitService.java
-Line: 13
-```
-
-**Problem:** Rate limiting state is stored in a JVM-level `ConcurrentHashMap`:
-```java
-private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
-```
-
-Three production-critical failures:
-
-1. **Memory leak / OOM:** Buckets are created per `key + "_" + ruleName` and **never evicted**. Under a DDoS attack with spoofed IPs, the map grows until OOM, crashing the application.
-
-2. **State reset on restart:** Every restart clears all rate limit state. An attacker can trigger a restart (e.g., via OOM above) and get a full quota reset.
-
-3. **Multi-instance bypass:** With horizontal scaling, each instance has its own independent map. A single attacker gets `N × limit` requests across N instances, completely defeating rate limiting.
-
-**Impact:** Brute-force attacks succeed (the exact thing rate limiting prevents), OOM crash, rate limits silently bypassed in scaled deployments.
-
-**Recommendation:** Replace with Redis-backed Bucket4j distributed rate limiter. Use TTL-expiring keys to prevent memory leak.
-
-**Evidence:**
-```java
-// RateLimitService.java line 13 — unbounded, non-distributed, non-persistent
-private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
-```
-
----
-
-### PR-009 · Critical · Password Reset — Verification Code Multipurposed (No Type Discriminator)
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/auth/service/AuthService.java
-Methods: verifyAccount(), forgetPassword(), reGenerateCode(), resetPassword()
-Lines: 118-141, 159-174, 143-157, 187-199
-```
-
-**Problem:** The `user.verificationCode` field serves both email verification (registration) and password reset. This creates:
-
-1. **State collision:** A `forgetPassword()` request overwrites the registration verification code, breaking the verification flow for partially-registered users.
-
-2. **Cross-flow replay:** A registration verification code can be submitted to `resetPassword()`, and vice versa. The `resetPassword()` method only checks code equality — not whether the code was issued for a password reset.
-
-3. **Active user bypass:** `forgetPassword()` does not check `user.isActive()`. An attacker can request a password reset for an unverified (inactive) user, get a reset code, and use it to set the account password — ready for when the account is later activated.
-
-**Impact:** Account takeover via cross-flow code reuse. State corruption in multi-step flows.
-
-**Recommendation:** Add separate `verificationCodeType` (enum: `EMAIL_VERIFICATION`, `PASSWORD_RESET`) and `verificationCodeExpiresAt` fields to `User`. Check type in each handler. Add active-user check to `forgetPassword()`.
-
----
-
-### PR-010 · Critical · Production Readiness — Debug Print Statements in Main Class
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/BlinkApplication.java
-Lines: 13-14
-```
-
-**Problem:**
-```java
-System.out.println("App Running Successfully");
-System.out.println("App Running Successfullysssssssssss");
-```
-
-These debug statements with a visible typo confirm this code was never reviewed for production readiness. `System.out.println` bypasses SLF4J/Logback, cannot be structured or filtered, and pollutes log aggregation systems (ELK, CloudWatch, Splunk).
-
-**Why it passes in development:** Developers overlook debug print statements.
-
-**Impact:** Stdout pollution on every startup. Log aggregation systems receive unstructured noise. Strong indicator of no pre-production review process.
-
-**Recommendation:** Remove both lines. If startup logging is needed, use `log.info("Blink application started successfully")`.
-
----
 
 ### PR-011 · High · Security — Swagger UI Publicly Exposed in Production
 
@@ -1015,6 +847,89 @@ Line: 14
 Expired URLs remain in the database for up to a month after expiry. Analytics aggregate queries run against an ever-growing expired URL set. Consider running weekly or nightly for better data hygiene.
 
 ---
+
+---
+
+### PR-007 · Critical · URL Shortener — Server-Side Request Forgery (SSRF)
+
+**Location:**
+```
+File: src/main/java/com/example/Blink/url/service/UrlService.java
+Method: checkUrl()⃁
+Lines: 143-155
+File: src/main/java/com/example/Blink/security/SecurityConfig.java
+Line: 64
+```
+
+**Problem:** The `checkUrl()` method opens an HTTP connection to any URL provided by the user with no allowlist validation:
+```java
+URL url = URI.create(rawUrl).toURL();
+HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+connection.setRequestMethod("HEAD");
+connection.setInstanceFollowRedirects(true);
+```
+
+This is a classic SSRF vulnerability. An attacker can:
+1. Probe internal network: `http://192.168.1.1/admin`, `http://10.0.0.1/`
+2. Access cloud metadata: `http://169.254.169.254/latest/meta-data/` (AWS IMDSv1 — returns IAM credentials)
+3. Scan internal ports
+4. Hit internal services behind the firewall
+
+This endpoint is **publicly accessible** — no authentication required (SecurityConfig line 64: `permitAll()`).
+
+**Why it passes in development:** Developer only tests with public URLs; internal network not reachable from dev machine.
+
+**Impact:** Cloud credential exfiltration (IAM role via IMDS), internal service port scanning, privilege escalation. This is one of the highest-impact vulnerabilities in the codebase.
+
+**Recommendation:** (1) Allowlist only `http://` and `https://` schemes. (2) Resolve hostname; block RFC-1918 ranges (10.x, 172.16-31.x, 192.168.x), loopback (127.x, ::1), link-local (169.254.x), cloud metadata IPs. (3) Consider removing or restricting to authenticated users.
+
+**Evidence:**
+```java
+// UrlService.java lines 144-154 — no IP or scheme validation
+URL url = URI.create(rawUrl).toURL();
+HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+connection.setInstanceFollowRedirects(true);  // Follows redirects — bypasses naive host checks
+return connection.getResponseCode() < 400;
+
+// SecurityConfig.java line 64 — publicly accessible
+.requestMatchers("/api/v1/urls/check").permitAll()
+```
+
+---
+
+### PR-008 · Critical · Rate Limiting — In-Memory Buckets Cause OOM and Multi-Instance Bypass
+
+**Location:**
+```
+File: src/main/java/com/example/Blink/rate_limit/RateLimitService.java
+Line: 13
+```
+
+**Problem:** Rate limiting state is stored in a JVM-level `ConcurrentHashMap`:
+```java
+private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+```
+
+Three production-critical failures:
+
+1. **Memory leak / OOM:** Buckets are created per `key + "_" + ruleName` and **never evicted**. Under a DDoS attack with spoofed IPs, the map grows until OOM, crashing the application.
+
+2. **State reset on restart:** Every restart clears all rate limit state. An attacker can trigger a restart (e.g., via OOM above) and get a full quota reset.
+
+3. **Multi-instance bypass:** With horizontal scaling, each instance has its own independent map. A single attacker gets `N × limit` requests across N instances, completely defeating rate limiting.
+
+**Impact:** Brute-force attacks succeed (the exact thing rate limiting prevents), OOM crash, rate limits silently bypassed in scaled deployments.
+
+**Recommendation:** Replace with Redis-backed Bucket4j distributed rate limiter. Use TTL-expiring keys to prevent memory leak.
+
+**Evidence:**
+```java
+// RateLimitService.java line 13 — unbounded, non-distributed, non-persistent
+private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+```
+
+---
+
 
 ## Module Summaries
 

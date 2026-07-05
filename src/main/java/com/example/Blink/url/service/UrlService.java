@@ -96,7 +96,7 @@ public class UrlService {
             }
         }
 
-        throw new RuntimeException("Failed generating unique code");
+        throw new ShortCodeExhaustedException();
     }
 
     private String generateShortCode() {

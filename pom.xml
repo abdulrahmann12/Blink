@@ -64,6 +64,13 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- Hashids -->
+		<dependency>
+			<groupId>org.hashids</groupId>
+			<artifactId>hashids</artifactId>
+			<version>1.0.3</version>
+		</dependency>
+
 		<!-- Web Socket -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

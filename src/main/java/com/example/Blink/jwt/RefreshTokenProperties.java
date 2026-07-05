@@ -6,11 +6,13 @@ import org.springframework.stereotype.Component;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Duration;
+
 @Component
 @ConfigurationProperties(prefix = "jwt.refresh-token")
 @Getter
 @Setter
 public class RefreshTokenProperties {
 
-    private long expirationMinutes;
+    private Duration expirationMinutes;
 }
