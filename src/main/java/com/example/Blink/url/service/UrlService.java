@@ -27,10 +27,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.beans.factory.annotation.Value;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -60,7 +62,13 @@ public class UrlService {
         User currentUser = authenticatedUserService.getCurrentUser();
 
         try {
-            URI.create(request.getOriginalUrl());
+            URI uri = URI.create(request.getOriginalUrl());
+
+            if (!List.of("http", "https")
+                    .contains(uri.getScheme().toLowerCase())) {
+                throw new InvalidUrlException();
+            }
+
         } catch (Exception e) {
             throw new InvalidUrlException();
         }
@@ -146,13 +154,45 @@ public class UrlService {
 
     public boolean checkUrl(String rawUrl) {
         try {
-            URL url = URI.create(rawUrl).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            URI uri = URI.create(rawUrl);
+
+            // Allow only HTTP/HTTPS
+            String scheme = uri.getScheme();
+            if (scheme == null ||
+                    !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+                return false;
+            }
+
+            String host = uri.getHost();
+            if (host == null || host.isBlank()) {
+                return false;
+            }
+
+            InetAddress address = InetAddress.getByName(host);
+
+            // Block localhost and private/internal addresses
+            if (address.isAnyLocalAddress()
+                    || address.isLoopbackAddress()
+                    || address.isLinkLocalAddress()
+                    || address.isSiteLocalAddress()
+                    || address.isMulticastAddress()) {
+                return false;
+            }
+
+            HttpURLConnection connection =
+                    (HttpURLConnection) uri.toURL().openConnection();
+
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(3000);
             connection.setReadTimeout(3000);
-            connection.setInstanceFollowRedirects(true);
-            return connection.getResponseCode() < 400;
+
+            // Don't follow redirects automatically
+            connection.setInstanceFollowRedirects(false);
+
+            int status = connection.getResponseCode();
+
+            return status >= 200 && status < 400;
+
         } catch (Exception e) {
             return false;
         }

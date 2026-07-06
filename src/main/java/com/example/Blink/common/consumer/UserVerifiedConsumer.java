@@ -19,7 +19,7 @@ public class UserVerifiedConsumer {
         try {
             emailService.sendWelcomeMail(event, Messages.WELCOME_MAIL);
         } catch (Exception e) {
-            throw new MailSendingException();
+            throw new MailSendingException(e);
         }
     }
 
