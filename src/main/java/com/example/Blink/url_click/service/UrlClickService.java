@@ -72,7 +72,14 @@ public class UrlClickService {
         String referrer = sanitizeReferrer(request.getHeader("Referer"));
         UserAgentData ua = parseUserAgent(userAgent);
 
-        eventPublisher.publishEvent(new ClickTrackingEvent(url.getUrlId(), ip, ua, referrer));
+
+        try {
+            eventPublisher.publishEvent(
+                    new ClickTrackingEvent(url.getUrlId(), ip, ua, referrer)
+            );
+        } catch (Exception e) {
+            log.warn("Click tracking skipped for URL {}: {}", url.getUrlId(), e.getMessage());
+        }
     }
 
     @Async("clickTrackingExecutor")
@@ -101,6 +108,8 @@ public class UrlClickService {
                     .build();
 
             urlClickRepository.save(click);
+
+            urlRepository.incrementClickCount(url.getUrlId());
         } catch (Exception e) {
             log.error("Failed to track click for URL {}: {}", event.urlId(), e.getMessage());
         }

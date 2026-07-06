@@ -14,26 +14,9 @@
 | PR-007 | **Critical** | URL Shortener | `UrlService.java` | 143-155 | ❌ |
 | PR-008 | **Critical** | Rate Limiting | `RateLimitService.java` | 13 | ❌ |
 | PR-017 | **High** | Email | `UserRegisteredConsumer.java` | 22 | ⚠️ |
-
-
-
-| PR-024 | **High** | Performance | `AuthenticatedUserService.java` | 33 | ⚠️ |
-| PR-025 | **High** | Security | `application.properties` | 97-99 | ⚠️ |
-| PR-026 | **Medium** | Exception Handling | `GlobalExceptionHandler.java` | 84-87 | ⚠️ |
-| PR-027 | **Medium** | Database | `User.java` | 41 | ⚠️ |
-| PR-028 | **Medium** | Database | `Url.java` | 30-31 | ⚠️ |
-| PR-029 | **Medium** | Configuration | `application.properties` | 36-41 | ⚠️ |
-| PR-030 | **Medium** | Rate Limiting | `RateLimitFilter.java` | 114 | ⚠️ |
-| PR-031 | **Medium** | Performance | `UrlClickService.java` | 78-106 | ⚠️ |
-| PR-032 | **Medium** | Security | `UserController.java` | 41-44 | ⚠️ |
 | PR-033 | **Medium** | URL Shortener | `UrlService.java` | 57-61 | ⚠️ |
-| PR-034 | **Medium** | Email | `EmailService.java` | 89-91 | ⚠️ |
-| PR-035 | **Medium** | Database | `UrlCleanupService.java` | 22-33 | ⚠️ |
-| PR-036 | **Medium** | Performance | `UrlService.java` | 111-124 | ⚠️ |
-| PR-037 | **Medium** | Configuration | `application.properties` | 76 | ⚠️ |
-| PR-038 | **Medium** | Security | `BlockedUrlService.java` | 78-81 | ⚠️ |
-| PR-039 | **Medium** | QR Code | `QrCodeService.java` | 35-68 | ⚠️ |
 | PR-040 | **Medium** | Configuration | `RabbitCommonConfig.java` | all | ⚠️ |
+
 | PR-041 | **Low** | Code Quality | `BlinkApplication.java` | 13-14 | ℹ️ |
 | PR-042 | **Low** | Database | `UrlRepository.java` | 65-74 | ℹ️ |
 | PR-043 | **Low** | API Design | `AuthController.java` | 63-66 | ℹ️ |
@@ -51,357 +34,6 @@
 
 
 
-### PR-024 · High · Performance — getCurrentUser() Issues DB Query on Every Authenticated Request
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/security/AuthenticatedUserService.java
-Method: getCurrentUser()
-Line: 33
-```
-
-**Problem:**
-```java
-return userRepository.findByIdWithRole(userDetails.getUserId())
-        .orElseThrow(UserNotFoundException::new);
-```
-
-Every call to `getCurrentUser()` issues a `SELECT u FROM User u JOIN FETCH u.role WHERE u.userId = ?` query. This is called in `UrlService`, `QrCodeService`, `UrlClickService`, and `AuthService` — multiple times per request in some flows.
-
-Under 100 req/sec, this alone adds 100+ extra DB queries per second for user lookups. These compete with URL lookup queries on the highest-traffic path (redirect).
-
-**Recommendation:** For ownership and role checks, use `CustomUserDetails` from the security context directly — it already holds `userId` and role. Reserve `getCurrentUser()` (DB fetch) only for operations that truly need a fresh entity state (e.g., password change).
-
----
-
-### PR-025 · High · Security — Actuator health Endpoint Exposes Full System Details Without Auth
-
-**Location:**
-```
-File: src/main/resources/application.properties
-Lines: 97-99
-```
-
-**Problem:**
-```properties
-management.endpoints.web.exposure.include=health,info,metrics
-management.endpoint.health.show-details=always
-```
-
-`health` with `show-details=always` exposes HikariCP pool status, RabbitMQ state, disk space, and JVM memory to any unauthenticated caller. `metrics` endpoint exposes performance counters. No authentication is required.
-
-**Recommendation:** Change to `show-details=when_authorized`. Restrict actuator to an internal management port or add security config requiring admin role.
-
----
-
-### PR-026 · Medium · Exception Handling — ExpiredJwtException Returns HTTP 400 Instead of 401
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/exception/GlobalExceptionHandler.java
-Lines: 84-87
-```
-
-**Problem:**
-```java
-@ExceptionHandler(ExpiredJwtException.class)
-public ResponseEntity<BaseResponse> handleJwtExpired(ExpiredJwtException ex, WebRequest request) {
-    return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.BAD_REQUEST);
-}
-```
-
-An expired JWT is an authentication failure → should return 401 Unauthorized, not 400 Bad Request. The `JwtAuthenticationFilter` correctly returns 401 (line 59), creating inconsistent behavior depending on which handler catches the exception first.
-
-**Recommendation:** Change `HttpStatus.BAD_REQUEST` to `HttpStatus.UNAUTHORIZED`.
-
----
-
-### PR-027 · Medium · Database — verificationCode Column Has No Length Constraint
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/user/entity/User.java
-Line: 41
-```
-
-**Problem:**
-```java
-private String verificationCode;
-```
-
-No `@Column(length=...)` annotation. MySQL defaults to `VARCHAR(255)`. Intent is not documented. Any future change to code generation (e.g., longer UUID-based codes) would silently be constrained by this undocumented default.
-
-**Recommendation:** Add `@Column(length = 10)` to document intent and enforce the constraint.
-
----
-
-### PR-028 · Medium · Database — High-Traffic Columns Missing Explicit Index Declarations
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/entity/Url.java
-Lines: 30-36
-```
-
-**Problem:** `shortUrl` and `customAlias` have `@Column(unique = true)` which creates implicit unique indexes. However, `findByShortUrl()` is called on **every redirect** — the highest-traffic operation. Implicit indexes from unique constraints exist but are not named or explicitly managed. With `ddl-auto=update`, if the table existed before the unique constraint was added, the index may be absent.
-
-**Recommendation:** Add `@Table(indexes={@Index(name="idx_url_short_url", columnList="shortUrl")})` explicitly. Verify index existence with `SHOW INDEX FROM Urls` post-deployment.
-
----
-
-### PR-029 · Medium · Configuration — Localhost Origins in Production CORS Config
-
-**Location:**
-```
-File: src/main/resources/application.properties
-Lines: 36-38
-```
-
-**Problem:** Even if the CORS config were correctly wired (see PR-004), it allows localhost origins in what is intended as a production configuration file:
-```properties
-app.cors.allowed-origin-patterns[0]=http://localhost:4200
-app.cors.allowed-origin-patterns[1]=http://localhost:3000
-```
-
-**Recommendation:** Use Spring profiles. Move production CORS to `application-prod.properties`. Remove all localhost origins from production config.
-
----
-
-### PR-030 · Medium · Rate Limiting — Uses getRemoteAddr() Instead of X-Forwarded-For
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/rate_limit/RateLimitFilter.java
-Method: resolveKey()
-Line: 114
-```
-
-**Problem:**
-```java
-return "IP_" + request.getRemoteAddr();
-```
-
-Behind a load balancer, `getRemoteAddr()` returns the load balancer's IP — not the actual client IP. All unauthenticated users share a single rate limit bucket, meaning one legitimate user exhausting the login rate limit blocks ALL users.
-
-Contrast with `UrlClickService.extractClientIp()` which correctly reads `X-Forwarded-For`.
-
-**Recommendation:** Apply the same `X-Forwarded-For` parsing logic from `UrlClickService.extractClientIp()` in `resolveKey()`.
-
----
-
-### PR-031 · Medium · Performance — Async Click Tracking Can Cascade Failures to Redirect
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url_click/service/UrlClickService.java
-Method: handleClickTrackingEvent()
-Lines: 78-106
-File: src/main/java/com/example/Blink/config/AsyncConfig.java
-Lines: 17-20
-```
-
-**Problem:** The `clickTrackingExecutor` has a bounded queue of 100 events. No `RejectedExecutionHandler` is set → defaults to `AbortPolicy` (throws `RejectedExecutionException`).
-
-When the queue fills under burst traffic (URL going viral), `eventPublisher.publishEvent()` in `trackClick()` propagates the rejection back to the redirect thread, causing `GET /{shortCode}` to fail with a 500 error.
-
-**Why it fails in production:** Under burst traffic, analytics tracking failure cascades to redirect failure — the most user-visible action.
-
-**Recommendation:** Set `executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy())`. Analytics loss during spikes is acceptable; redirect failure is not.
-
-**Evidence:**
-```java
-// AsyncConfig.java lines 19-20 — no RejectedExecutionHandler; defaults to AbortPolicy
-executor.setQueueCapacity(100);
-// executor.setRejectedExecutionHandler(...); // MISSING
-
-// UrlClickService.java line 75 — publishEvent before returning from redirect
-eventPublisher.publishEvent(new ClickTrackingEvent(...));
-```
-
----
-
-### PR-032 · Medium · Security — getUserByIdentifier PreAuthorize References Undefined Parameter
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/user/controller/UserController.java
-Method: getUserByIdentifier()
-Lines: 41-44
-```
-
-**Problem:**
-```java
-@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
-@GetMapping("/find/{identifier}")
-public ResponseEntity<BaseResponse> getUserByIdentifier(@PathVariable String identifier) {
-```
-
-The SpEL expression references `#userId`, but the method parameter is named `identifier`. `#userId` evaluates to `null`, making `null == authentication.principal.userId` always `false`. Regular users are always denied — only ADMINs can access this endpoint, which breaks the intended self-service lookup.
-
-**Recommendation:** Remove the broken SpEL condition and restrict to admins only, or redesign ownership check in the service layer.
-
----
-
-### PR-033 · Medium · URL Shortener — URI.create() Accepts javascript: and data: Schemes
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/service/UrlService.java
-Method: generateShortUrl()
-Lines: 57-61
-```
-
-**Problem:**
-```java
-try {
-    URI.create(request.getOriginalUrl());
-} catch (Exception e) {
-    throw new InvalidUrlException();
-}
-```
-
-`URI.create("javascript:alert(1)")` does NOT throw an exception — it creates a valid URI. The `@URL` Hibernate annotation on `CreateUrlRequest.originalUrl` is the actual guard (it rejects non-http/https). However, the duplicate `URI.create()` check creates false confidence and adds no security value.
-
-**Recommendation:** Remove the redundant `URI.create()` check. Add explicit scheme validation after the `@URL` annotation: reject any scheme other than `http` and `https`.
-
----
-
-### PR-034 · Medium · Email — No SMTP Timeouts Configured
-
-**Location:**
-```
-File: src/main/resources/application.properties
-Lines: 67-73
-```
-
-**Problem:** No SMTP connection, read, or write timeout is configured. If Gmail SMTP is slow or unreachable, `javaMailSender.send(message)` blocks the RabbitMQ consumer thread indefinitely. With limited consumer threads, all consumer threads can be stuck waiting for SMTP, halting all email processing for the entire application.
-
-**Recommendation:**
-```properties
-spring.mail.properties.mail.smtp.connectiontimeout=5000
-spring.mail.properties.mail.smtp.timeout=5000
-spring.mail.properties.mail.smtp.writetimeout=5000
-```
-
----
-
-### PR-035 · Medium · Database — UrlClick Records Orphaned When URLs Are Deleted
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/scheduler/service/UrlCleanupService.java
-```
-
-**Problem:** When expired URLs are deleted, associated `UrlClick` records are NOT deleted. No `@OneToMany(cascade=CascadeType.ALL)` on `Url`, no explicit delete in cleanup, no database `ON DELETE CASCADE`. The `url_clicks` table grows indefinitely with orphaned rows referencing deleted URL IDs, causing referential integrity issues and wasted storage.
-
-**Recommendation:** Add `urlClickRepository.deleteByUrl_UrlId(url.getUrlId())` before `urlRepository.delete(url)` in `removeExpiredUrls()`, or configure cascade at the DB level via migration.
-
----
-
-### PR-036 · Medium · Performance — Click Count Incremented with DB Write on Every Redirect
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/url/service/UrlService.java
-Method: getOriginalUrl()
-Lines: 110-124
-```
-
-**Problem:**
-```java
-urlRepository.incrementClickCount(url.getUrlId());  // synchronous DB UPDATE
-urlClickService.trackClick(url, request);
-```
-
-A `@Modifying` UPDATE runs synchronously on every redirect, holding a write lock on the URL row. For popular URLs, concurrent redirects contend on the same row's `clickCount` column, increasing latency and creating potential deadlock scenarios.
-
-**Recommendation:** Use a Redis counter for click counts with periodic database sync. Or defer the update to the async click tracking path.
-
----
-
-### PR-037 · Medium · Configuration — Thymeleaf Template Location Check Disabled
-
-**Location:**
-```
-File: src/main/resources/application.properties
-Line: 76
-```
-
-**Problem:**
-```properties
-spring.thymeleaf.check-template-location=false
-```
-
-This disables startup-time validation that all referenced templates exist. A missing or misspelled template file will not fail at startup — it will fail silently at runtime when an email is first sent.
-
-**Recommendation:** Remove this property (default is `true`). Fix any missing templates that caused this to be disabled in the first place.
-
----
-
-### PR-038 · Medium · Security — isDomainBlocked() Cache Key Calls normalizeDomain() Twice
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/blocked_url/service/BlockedUrlService.java
-Method: isDomainBlocked()
-Line: 78
-```
-
-**Problem:**
-```java
-@Cacheable(value = "blockedDomains", key = "#root.target.normalizeDomain(#domain)")
-public boolean isDomainBlocked(String domain){
-    return blockedUrlRepository.existsByDomain(normalizeDomain(domain));
-}
-```
-
-The cache key SpEL expression calls `normalizeDomain()` on the target bean. If `normalizeDomain()` throws (null, blank, or invalid domain), the exception propagates before the method body is reached, causing confusing error paths through the caching framework. `normalizeDomain()` is also called twice per invocation (once in SpEL key, once in method body).
-
-**Recommendation:** Use `@Cacheable(key = "#domain.trim().toLowerCase()")` and handle normalization inside the method body once.
-
----
-
-### PR-039 · Medium · QR Code — Race Condition Between existsByUrl_urlId() and save()
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/qr_code/service/QrCodeService.java
-Method: generateQrCode()
-Lines: 47-65
-```
-
-**Problem:**
-```java
-if(qrCodeRepository.existsByUrl_urlId(urlId)){
-    throw new QrCodeAlreadyExistsException();
-}
-// ... Cloudinary upload ...
-QrCode qrCode = qrCodeRepository.save(...);
-```
-
-Two concurrent requests can both pass the `existsByUrl_urlId()` check, both upload to Cloudinary, and both attempt `save()`. The second save fails with a DB unique constraint violation — not specifically handled, surfaces as unhandled 500. If the second Cloudinary upload succeeds but the save fails, the image is orphaned in Cloudinary.
-
-**Recommendation:** Handle `DataIntegrityViolationException` with a 409 response. Wrap `save()` in a try-catch to delete the Cloudinary image if the DB save fails.
-
----
-
-### PR-040 · Medium · Configuration — RabbitMQ DLQ Not Configured for Any Queue
-
-**Location:**
-```
-File: src/main/java/com/example/Blink/config/rabbitconfig/AuthRabbitConfig.java
-```
-
-**Problem:** All queue declarations omit Dead-Letter Exchange arguments. Combined with `default-requeue-rejected=false`, messages failing all 3 retries are permanently discarded. No DLQ consumer, no alerting, no audit trail.
-
-**Recommendation:**
-```java
-return QueueBuilder.durable(RabbitConstants.USER_REGISTERED_QUEUE)
-    .withArgument("x-dead-letter-exchange", "auth.dlx")
-    .withArgument("x-dead-letter-routing-key", "user.registered.dead")
-    .build();
-```
-Create DLX and DLQs. Implement DLQ consumer with alerts.
 
 ---
 
@@ -653,6 +285,49 @@ Additionally, `UserVerifiedConsumer.java` line 22: `throw new MailSendingExcepti
 **Recommendation:** Configure DLX and DLQ for all queues. Implement DLQ consumer with alerting. Fix `throw new MailSendingException()` → `throw new MailSendingException(e)`.
 
 ---
+### PR-033 · Medium · URL Shortener — URI.create() Accepts javascript: and data: Schemes
+
+**Location:**
+```
+File: src/main/java/com/example/Blink/url/service/UrlService.java
+Method: generateShortUrl()
+Lines: 57-61
+```
+
+**Problem:**
+```java
+try {
+    URI.create(request.getOriginalUrl());
+} catch (Exception e) {
+    throw new InvalidUrlException();
+}
+```
+
+`URI.create("javascript:alert(1)")` does NOT throw an exception — it creates a valid URI. The `@URL` Hibernate annotation on `CreateUrlRequest.originalUrl` is the actual guard (it rejects non-http/https). However, the duplicate `URI.create()` check creates false confidence and adds no security value.
+
+**Recommendation:** Remove the redundant `URI.create()` check. Add explicit scheme validation after the `@URL` annotation: reject any scheme other than `http` and `https`.
+
+---
+
+
+### PR-040 · Medium · Configuration — RabbitMQ DLQ Not Configured for Any Queue
+
+**Location:**
+```
+File: src/main/java/com/example/Blink/config/rabbitconfig/AuthRabbitConfig.java
+```
+
+**Problem:** All queue declarations omit Dead-Letter Exchange arguments. Combined with `default-requeue-rejected=false`, messages failing all 3 retries are permanently discarded. No DLQ consumer, no alerting, no audit trail.
+
+**Recommendation:**
+```java
+return QueueBuilder.durable(RabbitConstants.USER_REGISTERED_QUEUE)
+    .withArgument("x-dead-letter-exchange", "auth.dlx")
+    .withArgument("x-dead-letter-routing-key", "user.registered.dead")
+    .build();
+```
+Create DLX and DLQs. Implement DLQ consumer with alerts.
+
 
 ---
 

@@ -122,7 +122,6 @@ public class UrlService {
         if (url.isPasswordProtected()) {
             throw new UrlLockedException();
         }
-        urlRepository.incrementClickCount(url.getUrlId());
         urlClickService.trackClick(url, request);
 
         return url.getOriginalUrl();

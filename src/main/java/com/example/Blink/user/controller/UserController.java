@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.GET_USER_BY_IDENTIFIER, description = SwaggerMessages.GET_USER_BY_IDENTIFIER_DESC)
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/find/{identifier}")
     public ResponseEntity<BaseResponse> getUserByIdentifier(@PathVariable String identifier) {
         return ResponseEntity.ok(new BaseResponse(Messages.USER_FETCHED, userService.getUserByUsernameOrEmail(identifier)));

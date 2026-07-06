@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -56,14 +57,20 @@ public class QrCodeService {
 
         byte[] qrCodeImage = qrConverterService.generateQrCode(url.getShortUrl());
         ImageUploadResult uploadResult  = imageService.uploadImage(qrCodeImage);
+        QrCode qrCode;
+        try {
+            qrCode = qrCodeRepository.save(QrCode.builder()
+                    .url(url)
+                    .imagePath(uploadResult.imageUrl())
+                    .publicId(uploadResult.publicId())
+                    .qrText(url.getShortUrl())
+                    .build());
+        }catch (DataIntegrityViolationException ex) {
 
-        QrCode qrCode = qrCodeRepository.save(QrCode.builder()
-                .url(url)
-                .imagePath(uploadResult.imageUrl())
-                .publicId(uploadResult.publicId())
-                .qrText(url.getShortUrl())
-                .build());
+            imageService.deleteImage(uploadResult.publicId());
 
+            throw new QrCodeAlreadyExistsException();
+        }
         return qrCodeMapper.toResponse(qrCode);
     }
 

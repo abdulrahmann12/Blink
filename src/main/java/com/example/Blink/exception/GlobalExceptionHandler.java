@@ -84,7 +84,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity< BaseResponse> handleJwtExpired(ExpiredJwtException ex, WebRequest request) {
-        return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(VerificationCodeExpiredException.class)
@@ -206,7 +206,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<BaseResponse> handleInvalidUrl(InvalidUrlException ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.UNPROCESSABLE_ENTITY);
     }
-
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity< BaseResponse> handleSpringJsonParseException(

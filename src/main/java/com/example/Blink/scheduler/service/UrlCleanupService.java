@@ -5,6 +5,7 @@ import com.example.Blink.qr_code.entity.QrCode;
 import com.example.Blink.qr_code.repository.QrCodeRepository;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.url.repository.UrlRepository;
+import com.example.Blink.url_click.repository.UrlClickRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ public class UrlCleanupService {
     private final UrlRepository urlRepository;
     private final QrCodeRepository qrCodeRepository;
     private final ImageService imageService;
+    private final UrlClickRepository urlClickRepository;
 
     public void removeExpiredUrls() {
 
@@ -56,6 +58,8 @@ public class UrlCleanupService {
         if (qrCode != null) {
             qrCodeRepository.delete(qrCode);
         }
+        urlClickRepository.deleteByUrl_UrlId(url.getUrlId());
+
         urlRepository.delete(url);
     }
 }

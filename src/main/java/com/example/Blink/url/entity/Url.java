@@ -1,5 +1,6 @@
 package com.example.Blink.url.entity;
 
+import com.example.Blink.url_click.entity.UrlClick;
 import com.example.Blink.user.entity.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
@@ -14,7 +15,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "Urls")
+@Table(name = "Urls",
+        indexes = {
+                @Index(name = "idx_url_short_url", columnList = "short_url"),
+                @Index(name = "idx_url_custom_alias", columnList = "custom_alias")
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor

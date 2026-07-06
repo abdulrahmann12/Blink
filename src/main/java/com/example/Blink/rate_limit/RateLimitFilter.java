@@ -111,6 +111,13 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return "USER_" + userDetails.getUserId();
         }
 
+        String forwarded = request.getHeader("X-Forwarded-For");
+
+        if (forwarded != null && !forwarded.isBlank()) {
+            String clientIp = forwarded.split(",")[0].trim();
+            return "IP_" + clientIp;
+        }
+
         return "IP_" + request.getRemoteAddr();
     }
 
