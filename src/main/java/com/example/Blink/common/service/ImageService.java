@@ -7,21 +7,18 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.example.Blink.common.dto.ImageUploadResult;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
 @Service
+@RequiredArgsConstructor
 public class ImageService {
 
-    private Cloudinary cloudinary;
-
-    @Autowired
-    public ImageService(Cloudinary cloudinary) {
-        this.cloudinary = cloudinary;
-    }
+    private final Cloudinary cloudinary;
 
     public ImageUploadResult uploadImage(byte[] imageBytes) {
         try {

@@ -61,14 +61,14 @@ public class AuthController {
 
     @Operation(summary = SwaggerMessages.REGENERATE_CODE, description = SwaggerMessages.REGENERATE_CODE_DESC)
     @PostMapping("/regenerate-code")
-    public ResponseEntity<BaseResponse> regenerateCode(@RequestBody EmailRequestDTO emailRequestDTO) {
+    public ResponseEntity<BaseResponse> regenerateCode(@Valid @RequestBody EmailRequestDTO emailRequestDTO) {
         authService.reGenerateCode(emailRequestDTO);
         return ResponseEntity.ok(new BaseResponse(Messages.VERIFICATION_CODE_REGENERATED));
     }
 
     @Operation(summary = SwaggerMessages.FORGOT_PASSWORD, description = SwaggerMessages.FORGOT_PASSWORD_DESC)
     @PostMapping("/forget-password")
-    public ResponseEntity<BaseResponse> forgetPassword(@RequestBody EmailRequestDTO emailRequestDTO) {
+    public ResponseEntity<BaseResponse> forgetPassword(@Valid @RequestBody EmailRequestDTO emailRequestDTO) {
         authService.forgetPassword(emailRequestDTO);
         return ResponseEntity.ok(new BaseResponse(Messages.RESEND_CODE));
     }

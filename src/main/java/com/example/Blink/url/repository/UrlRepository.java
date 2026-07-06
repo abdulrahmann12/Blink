@@ -63,17 +63,6 @@ public interface UrlRepository extends JpaRepository<Url, UUID> {
     long countExpiredUrls(User user, LocalDateTime now);
 
     @Query("""
-    SELECT u FROM Url u
-    WHERE u.user = :user
-    AND (
-        LOWER(u.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        OR LOWER(u.originalUrl) LIKE LOWER(CONCAT('%', :keyword, '%'))
-        OR LOWER(u.customAlias) LIKE LOWER(CONCAT('%', :keyword, '%'))
-    )
-""")
-    List<Url> searchByUserAndKeyword(User user, String keyword);
-
-    @Query("""
     SELECT u
     FROM Url u
     JOIN FETCH u.user
