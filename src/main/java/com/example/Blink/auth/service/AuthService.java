@@ -31,7 +31,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HexFormat;
 import static com.example.Blink.config.rabbitconfig.RabbitConstants.*;
@@ -128,7 +127,6 @@ public class AuthService {
         }
         user.setActive(true);
         user.setVerificationCode(null);
-
         UserRegisteredEvent userRegisteredEvent = new UserRegisteredEvent(
                 user.getUserId(),
                 user.getEmail(),
@@ -144,9 +142,7 @@ public class AuthService {
     public void reGenerateCode(@Valid EmailRequestDTO emailRequestDTO){
         User user = userRepository.findByUsernameOrEmailWithRole(emailRequestDTO.getUsernameOrEmail())
                 .orElseThrow(UserNotFoundException::new);
-        if (!user.isActive()) {
-            throw new UserNotActiveException();
-        }
+
         if (user.getVerificationCodeExpiresAt() != null &&
                 Instant.now().isBefore(user.getVerificationCodeExpiresAt())) {
 

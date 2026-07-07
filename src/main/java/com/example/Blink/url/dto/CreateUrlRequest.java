@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @AllArgsConstructor
@@ -34,6 +34,6 @@ public class CreateUrlRequest {
     private String password;
 
     @Future(message = ValidationMessages.EXPIRE_DATE_FUTURE)
-    private LocalDateTime expireAt;
+    private Instant expireAt;
 
 }

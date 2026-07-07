@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -60,7 +60,7 @@ public interface UrlRepository extends JpaRepository<Url, UUID> {
     WHERE u.user = :user
     AND u.expireAt < :now
 """)
-    long countExpiredUrls(User user, LocalDateTime now);
+    long countExpiredUrls(User user, Instant now);
 
     @Query("""
     SELECT u
@@ -71,5 +71,5 @@ public interface UrlRepository extends JpaRepository<Url, UUID> {
     Optional<Url> findByIdWithUser(@Param("id") UUID id);
 
     @Query("SELECT u FROM Url u WHERE u.expireAt IS NOT NULL AND u.expireAt < :now")
-    List<Url> findByExpireAtBefore(@Param("now") LocalDateTime now);
+    List<Url> findByExpireAtBefore(@Param("now") Instant now);
 }

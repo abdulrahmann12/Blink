@@ -31,8 +31,8 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final RateLimitFilter rateLimitFilter;
 
-    @Value("${cors.allowed-origins:http://localhost:3000}")
-    private String allowedOrigins;
+    @Value("#{'${cors.allowed-origins}'.split(',')}")
+    private List<String> allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -87,7 +87,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);

@@ -19,7 +19,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -51,7 +51,7 @@ public class QrCodeService {
         if(!url.isActive()){
             throw new UrlNotActiveException();
         }
-        if (url.getExpireAt() != null && url.getExpireAt().isBefore(LocalDateTime.now())){
+        if (url.getExpireAt() != null && url.getExpireAt().isBefore(Instant.now())){
             throw new UrlExpiredException();
         }
 
@@ -81,7 +81,7 @@ public class QrCodeService {
         if(!url.isActive()){
             throw new UrlNotActiveException();
         }
-        if (url.getExpireAt() != null && url.getExpireAt().isBefore(LocalDateTime.now())){
+        if (url.getExpireAt() != null && url.getExpireAt().isBefore(Instant.now())){
             throw new UrlExpiredException();
         }
         QrCode qrCode = qrCodeRepository.findByUrl_urlId(urlId)

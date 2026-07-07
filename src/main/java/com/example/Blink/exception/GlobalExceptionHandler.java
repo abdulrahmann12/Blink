@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(VerificationCodeExpiredException.class)
     public ResponseEntity< BaseResponse> handleVerificationCodeExpired(VerificationCodeExpiredException ex, WebRequest request) {
-        return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(Messages.SESSION_EXPIRED, request, HttpStatus.UNAUTHORIZED);
     }
 
 

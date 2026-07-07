@@ -7,16 +7,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateUrlRequest {
 
+    @NotBlank(message = ValidationMessages.TITLE_NOT_BLANK)
     private String title;
 
-    private LocalDateTime expireAt;
+    @Future(message = ValidationMessages.EXPIRE_DATE_FUTURE)
+    private Instant expireAt;
 
     private Boolean active;
 

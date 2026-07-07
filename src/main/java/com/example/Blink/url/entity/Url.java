@@ -3,6 +3,7 @@ package com.example.Blink.url.entity;
 import com.example.Blink.url_click.entity.UrlClick;
 import com.example.Blink.user.entity.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -47,7 +48,8 @@ public class Url {
 
     private String passwordHash;
 
-    private LocalDateTime expireAt;
+    @Future
+    private Instant expireAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -58,10 +60,10 @@ public class Url {
     private long clickCount;
 
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
-    private LocalDateTime deletesAt;
+    private Instant deletesAt;
 }

@@ -32,7 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 
 @Service
@@ -95,7 +95,7 @@ public class UserService {
             throw new UserAlreadyDeactivatedException();
         }
         user.setActive(false);
-        user.setDeletesAt(LocalDateTime.now());
+        user.setDeletesAt(Instant.now());
         userRepository.save(user);
     }
 

@@ -10,7 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "users")
@@ -39,6 +39,7 @@ public class User {
     @Column(length = 2048)
     private String profilePictureUrl;
 
+    @Column(length=10)
     private String verificationCode;
 
     @Column(nullable = false, columnDefinition = "boolean default false")
@@ -48,12 +49,12 @@ public class User {
 
     @CreationTimestamp
     @Column(updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
-    private LocalDateTime deletesAt;
+    private Instant deletesAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id",nullable = false)

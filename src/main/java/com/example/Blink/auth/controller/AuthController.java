@@ -75,7 +75,7 @@ public class AuthController {
 
     @Operation(summary = SwaggerMessages.RESET_PASSWORD, description = SwaggerMessages.RESET_PASSWORD_DESC)
     @PostMapping("/reset-password")
-    public ResponseEntity<BaseResponse> resetPassword(@RequestBody ResetPasswordRequestDTO request) {
+    public ResponseEntity<BaseResponse> resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
         authService.resetPassword(request);
         return ResponseEntity.ok(new BaseResponse(Messages.RESET_SUCCESS));
     }
@@ -83,7 +83,7 @@ public class AuthController {
     @Operation(summary = SwaggerMessages.CHANGE_PASSWORD, description = SwaggerMessages.CHANGE_PASSWORD_DESC)
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<BaseResponse> changePassword(@RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<BaseResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(request);
         return ResponseEntity.ok(new BaseResponse(Messages.PASSWORD_CHANGED));
     }

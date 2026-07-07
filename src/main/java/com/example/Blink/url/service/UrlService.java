@@ -31,7 +31,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -202,7 +202,7 @@ public class UrlService {
         if (!url.isActive()) {
             throw new UrlNotActiveException();
         }
-        if (url.getExpireAt() != null && url.getExpireAt().isBefore(LocalDateTime.now())) {
+        if (url.getExpireAt() != null && url.getExpireAt().isBefore(Instant.now())) {
             throw new UrlExpiredException();
         }
     }
@@ -320,7 +320,7 @@ public class UrlService {
         long total = urlRepository.countByUser(currentUser);
         long active = urlRepository.countByUserAndActiveTrue(currentUser);
         long clicks = urlRepository.sumClicksByUser(currentUser);
-        long expired = urlRepository.countExpiredUrls(currentUser, LocalDateTime.now());
+        long expired = urlRepository.countExpiredUrls(currentUser, Instant.now());
 
         DashboardResponse response = new DashboardResponse();
         response.setTotalUrls(total);

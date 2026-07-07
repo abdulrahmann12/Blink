@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -26,7 +27,7 @@ public class UrlCleanupService {
 
     public void removeExpiredUrls() {
 
-        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
+        Instant oneMonthAgo = Instant.now().minus(30, ChronoUnit.DAYS);
         List<Url> urls = urlRepository.findByExpireAtBefore(oneMonthAgo);
 
         log.info("Found {} expired URLs to clean up.", urls.size());

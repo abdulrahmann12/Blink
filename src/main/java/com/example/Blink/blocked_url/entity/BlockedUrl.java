@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "blocked_urls")
@@ -27,5 +27,5 @@ public class BlockedUrl {
     private String reason;
 
     @CreationTimestamp
-    private LocalDateTime blockedAt;
+    private Instant blockedAt;
 }

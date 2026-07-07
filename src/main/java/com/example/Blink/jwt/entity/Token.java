@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "tokens", indexes = {
