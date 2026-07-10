@@ -72,6 +72,29 @@ public class SwaggerMessages {
     public static final String CHANGE_URL_PASSWORD = "Change URL Password";
     public static final String CHANGE_URL_PASSWORD_DESC = "Changes the password of a password-protected URL owned by the authenticated user";
 
+    //========================= Admin URL Tag =========================
+
+    public static final String TAG_ADMIN_URL = "Admin URL";
+    public static final String TAG_ADMIN_URL_DESC = "Admin endpoints for managing and monitoring all short URLs";
+
+    public static final String ADMIN_GET_ALL_URLS = "Get All URLs";
+    public static final String ADMIN_GET_ALL_URLS_DESC = "Returns a paginated list of all URLs in the system";
+
+    public static final String ADMIN_SEARCH_URLS = "Search URLs";
+    public static final String ADMIN_SEARCH_URLS_DESC = "Searches URLs by keyword across short code, original URL, and title";
+
+    public static final String ADMIN_GET_INACTIVE_URLS = "Get Inactive URLs";
+    public static final String ADMIN_GET_INACTIVE_URLS_DESC = "Returns a paginated list of all inactive URLs";
+
+    public static final String ADMIN_GET_EXPIRED_URLS = "Get Expired URLs";
+    public static final String ADMIN_GET_EXPIRED_URLS_DESC = "Returns a paginated list of all expired URLs";
+
+    public static final String ADMIN_GET_TOP_URLS = "Get Top URLs";
+    public static final String ADMIN_GET_TOP_URLS_DESC = "Returns a paginated list of URLs ordered by click count descending";
+
+    public static final String ADMIN_GET_DASHBOARD = "Get Admin Dashboard";
+    public static final String ADMIN_GET_DASHBOARD_DESC = "Returns admin dashboard statistics including total, active, inactive, expired URLs and total clicks";
+
     //========================= URL Click Tag =========================
 
     public static final String TAG_URL_CLICK = "URL Clicks";

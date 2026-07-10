@@ -1,0 +1,103 @@
+package com.example.Blink.url.service;
+
+import com.example.Blink.exception.*;
+import com.example.Blink.url.dto.*;
+import com.example.Blink.url.entity.Url;
+import com.example.Blink.url.mapper.UrlMapper;
+import com.example.Blink.url.repository.UrlRepository;
+import com.example.Blink.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
+import java.time.Instant;
+
+@Service
+@RequiredArgsConstructor
+@Validated
+public class AdminUrlService {
+    private final UrlRepository urlRepository;
+    private final UrlMapper urlMapper;
+    private final UserRepository userRepository;
+
+    @Transactional
+    public Page<UrlResponse> getAllUrls(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Url> urls = urlRepository.findAll(pageable);
+        return urls.map(urlMapper::toResponse);
+    }
+
+    // Get Url by id used urlservice method
+
+    @Transactional
+    public Page<UrlResponse> searchUrls(String keyword, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return urlRepository.searchUrls(keyword, pageable)
+                .map(urlMapper::toResponse);
+    }
+
+    //  toggleStatus use urlservice method
+
+    @Transactional
+    public Page<UrlResponse> getInactiveUrls(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return urlRepository.findByActiveFalse(pageable)
+                .map(urlMapper::toResponse);
+    }
+
+
+    @Transactional
+    public Page<UrlResponse> getExpiredUrls(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return urlRepository
+                .findExpiredUrls(Instant.now(), pageable)
+                .map(urlMapper::toResponse);
+    }
+
+    public AdminDashboardResponse getDashboard() {
+
+        AdminDashboardResponse response =
+                new AdminDashboardResponse();
+
+        response.setTotalUsers(userRepository.count());
+
+        response.setTotalActiveUsers(userRepository.countByActiveTrue());
+
+        response.setTotalDeActiveUsers(userRepository.countByActiveFalse());
+
+        response.setTotalNOtVerifiedUsers(userRepository.countByActiveFalse());
+
+        response.setTotalUrls(urlRepository.count());
+
+        response.setActiveUrls(urlRepository.countByActiveTrue());
+
+        response.setInactiveUrls(urlRepository.countByActiveFalse());
+
+        response.setExpiredUrls(
+                urlRepository.countExpiredUrls(Instant.now()));
+
+        response.setTotalClicks(
+                urlRepository.sumClicks());
+
+        return response;
+    }
+
+    @Transactional
+    public Page<UrlResponse> getTopUrls(int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        return urlRepository
+                .findAllByOrderByClickCountDesc(pageable)
+                .map(urlMapper::toResponse);
+    }
+}

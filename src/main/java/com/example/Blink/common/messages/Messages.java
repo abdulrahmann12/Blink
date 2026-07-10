@@ -31,6 +31,9 @@ public class Messages {
     public static final String PASSWORD_CHANGED = "Password changed successfully";
     public static final String SHORT_CODE_EXHAUSTED = "All possible short codes have been exhausted. Please try again later.";
 
+    public static final String ADMIN_URLS_FETCHED = "All URLs retrieved successfully";
+    public static final String ADMIN_DASHBOARD_FETCHED = "Admin dashboard data retrieved successfully";
+
     //========================= User =========================
 
     public static final String USER_CREATED = "User created successfully";

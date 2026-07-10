@@ -37,5 +37,4 @@ public class UrlResponse {
     private Instant createdAt;
 
     private Instant updatedAt;
-
 }

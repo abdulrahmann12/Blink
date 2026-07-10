@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Value;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
@@ -230,13 +229,20 @@ public class UrlService {
         Url url = urlRepository.findByIdWithUser(urlId)
                 .orElseThrow(UrlNotFoundException::new);
 
-        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+        boolean isOwner =
+                url.getUser().getUserId().equals(currentUser.getUserId());
+
+        boolean isAdmin =
+                currentUser.getRole().getRoleName().equals("ADMIN");
+
+        if (!isOwner && !isAdmin) {
             throw new UnauthorizedException();
         }
 
         url.setActive(!url.isActive());
     }
 
+    @Cacheable(value = "urls", key = "#p0")
     public UrlResponse getUrlById(UUID urlId) {
 
         User currentUser = authenticatedUserService.getCurrentUser();

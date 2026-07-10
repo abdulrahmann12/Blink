@@ -72,4 +72,47 @@ public interface UrlRepository extends JpaRepository<Url, UUID> {
 
     @Query("SELECT u FROM Url u WHERE u.expireAt IS NOT NULL AND u.expireAt < :now")
     List<Url> findByExpireAtBefore(@Param("now") Instant now);
+
+    @Query("""
+    SELECT u
+    FROM Url u
+    JOIN FETCH u.user usr
+    WHERE
+        LOWER(COALESCE(u.title, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(u.originalUrl) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(u.shortUrl) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(COALESCE(u.customAlias, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR LOWER(usr.email) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    """)
+    Page<Url> searchUrls(@Param("keyword") String keyword, Pageable pageable);
+
+    Page<Url> findByActiveFalse(Pageable pageable);
+
+    @Query("""
+SELECT u
+FROM Url u
+WHERE u.expireAt IS NOT NULL
+AND u.expireAt < :now
+""")
+    Page<Url> findExpiredUrls(
+            @Param("now") Instant now,
+            Pageable pageable
+    );
+
+    long countByActiveTrue();
+
+    long countByActiveFalse();
+
+    @Query("SELECT COALESCE(SUM(u.clickCount),0) FROM Url u")
+    long sumClicks();
+
+    @Query("""
+SELECT COUNT(u)
+FROM Url u
+WHERE u.expireAt IS NOT NULL
+AND u.expireAt < :now
+""")
+    long countExpiredUrls(@Param("now") Instant now);
+
+    Page<Url> findAllByOrderByClickCountDesc(Pageable pageable);
 }

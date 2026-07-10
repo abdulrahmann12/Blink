@@ -62,4 +62,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(value = "SELECT u FROM User u JOIN FETCH u.role WHERE u.active = false",
            countQuery = "SELECT COUNT(u) FROM User u WHERE u.active = false")
     Page<User> findAllDeactivated(Pageable pageable);
+
+    long countByActiveTrue();
+
+    long countByActiveFalse();
+
+    long countByVerifyFalse();
 }
