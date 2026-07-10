@@ -17,6 +17,7 @@ public interface UserMapper {
     @Mapping(target = "deletesAt", ignore = true)
     @Mapping(target = "profilePictureUrl", ignore = true)
     @Mapping(target = "active", ignore = true)
+    @Mapping(target = "verify", ignore = true)
     @Mapping(target = "role", ignore = true)
     User toEntity(CreateUserRequest createUserRequest);
 
@@ -27,6 +28,7 @@ public interface UserMapper {
     @Mapping(target = "profilePictureUrl", ignore = true)
     @Mapping(target = "verificationCode", ignore = true)
     @Mapping(target = "active", ignore = true)
+    @Mapping(target = "verify", ignore = true)
     @Mapping(target = "role", ignore = true)
     User toUpdateEntity(UpdateUserRequest updateUserRequest);
 

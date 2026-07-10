@@ -21,6 +21,7 @@ public class UserResponse {
     private String roleName;
     private String verificationCode;
     private boolean active;
+    private boolean verify;
     private Instant createdAt;
     private Instant updatedAt;
 }

@@ -45,6 +45,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean active;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean verify;
+
     private Instant verificationCodeExpiresAt;
 
     @CreationTimestamp

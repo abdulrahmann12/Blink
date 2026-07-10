@@ -66,6 +66,7 @@ public class AuthService {
         user.setEmail(createUserRequest.getEmail().trim().toLowerCase());
         user.setUsername(createUserRequest.getUsername().trim().toLowerCase());
         user.setActive(false);
+        user.setVerify(false);
         user.setVerificationCode(generateConfirmationCode());
         User savedUser = userRepository.save(user);
 
@@ -87,6 +88,9 @@ public class AuthService {
         User user = userRepository.findByUsernameOrEmailWithRole(loginRequestDTO.getUsernameOrEmail())
                 .orElseThrow(UserNotFoundException::new);
 
+        if (!user.isVerify()){
+            throw new UserNotVerifyException();
+        }
         if (!user.isActive()) {
             throw new UserNotActiveException();
         }
@@ -119,13 +123,14 @@ public class AuthService {
         User user = userRepository.findByUsernameOrEmailWithRole(verifyAccountRequest.getUsernameOrEmail())
                 .orElseThrow(UserNotFoundException::new);
 
-        if (user.isActive()) {
+        if (user.isVerify()) {
             throw new AccountAlreadyVerifiedException();
         }
         if(!user.getVerificationCode().equals(verifyAccountRequest.getVerificationCode())){
             throw new InvalidVerificationCodeException();
         }
         user.setActive(true);
+        user.setVerify(true);
         user.setVerificationCode(null);
         UserRegisteredEvent userRegisteredEvent = new UserRegisteredEvent(
                 user.getUserId(),

@@ -16,5 +16,6 @@ public class UserSummaryResponse {
     private String email;
     private String roleName;
     private boolean active;
+    private boolean verify;
 }
 

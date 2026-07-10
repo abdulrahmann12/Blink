@@ -24,17 +24,24 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = SwaggerMessages.UPDATE_USER, description = SwaggerMessages.UPDATE_USER_DESC)
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
-    @PutMapping("/{userId}")
-    public ResponseEntity<BaseResponse> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserRequest request) {
-        return ResponseEntity.ok(new BaseResponse(Messages.USER_UPDATED, userService.updateUser(userId, request)));
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/data")
+    public ResponseEntity<BaseResponse> updateUser(@Valid @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.ok(new BaseResponse(Messages.USER_UPDATED, userService.updateUser(request)));
     }
 
     @Operation(summary = SwaggerMessages.GET_USER_BY_ID, description = SwaggerMessages.GET_USER_BY_ID_DESC)
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{userId}")
     public ResponseEntity<BaseResponse> getUserById(@PathVariable Long userId) {
         return ResponseEntity.ok(new BaseResponse(Messages.USER_FETCHED, userService.getUserById(userId)));
+    }
+
+    @Operation(summary = SwaggerMessages.GET_USER_BY_ID, description = SwaggerMessages.GET_USER_BY_ID_DESC)
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/data")
+    public ResponseEntity<BaseResponse> getUserData() {
+        return ResponseEntity.ok(new BaseResponse(Messages.USER_FETCHED, userService.getUserData()));
     }
 
     @Operation(summary = SwaggerMessages.GET_USER_BY_IDENTIFIER, description = SwaggerMessages.GET_USER_BY_IDENTIFIER_DESC)
@@ -99,11 +106,10 @@ public class UserController {
     }
 
     @Operation(summary = SwaggerMessages.UPDATE_PROFILE_PICTURE, description = SwaggerMessages.UPDATE_PROFILE_PICTURE_DESC)
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
-    @PatchMapping("/{userId}/profile-picture")
+    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/profile-picture")
     public ResponseEntity<BaseResponse> updateProfilePicture(
-            @PathVariable Long userId,
             @RequestPart MultipartFile image) throws IOException {
-        return ResponseEntity.ok(new BaseResponse(Messages.PROFILE_PICTURE_UPDATED, userService.updateProfilePicture(userId, image)));
+        return ResponseEntity.ok(new BaseResponse(Messages.PROFILE_PICTURE_UPDATED, userService.updateProfilePicture(image)));
     }
 }

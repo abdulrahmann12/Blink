@@ -11,6 +11,7 @@ import com.example.Blink.exception.UsernameAlreadyExistsException;
 import com.example.Blink.common.dto.ImageUploadResult;
 import com.example.Blink.role.repository.RoleRepository;
 import com.example.Blink.role.entity.Role;
+import com.example.Blink.security.AuthenticatedUserService;
 import com.example.Blink.user.dto.UpdateUserRequest;
 import com.example.Blink.user.dto.UserResponse;
 import com.example.Blink.user.dto.UserSummaryResponse;
@@ -44,11 +45,14 @@ public class UserService {
     private final UserMapper userMapper;
     private final RoleRepository roleRepository;
     private final ImageService imageService;
+    private final AuthenticatedUserService authenticatedUserService;
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
-    public UserResponse updateUser(Long userId, @Valid UpdateUserRequest updateUserRequest){
-        User user = userRepository.findByIdWithRole(userId).orElseThrow(UserNotFoundException::new);
+    public UserResponse updateUser(@Valid UpdateUserRequest updateUserRequest){
+
+        User user = authenticatedUserService.getCurrentUser();
+
         if (!user.isActive()) {
             throw new UserNotActiveException();
         }
@@ -70,6 +74,14 @@ public class UserService {
         return userMapper.toResponse(user);
     }
 
+    public UserResponse getUserData(){
+        User user = authenticatedUserService.getCurrentUser();
+        if (!user.isActive()) {
+            throw new UserNotActiveException();
+        }
+        return userMapper.toResponse(user);
+    }
+
     @Cacheable(value = "users", key = "#p0")
     public UserResponse getUserByUsernameOrEmail(String emailOrUsername){
         User user = userRepository.findByUsernameOrEmailWithRole(emailOrUsername.trim().toLowerCase())
@@ -77,14 +89,14 @@ public class UserService {
         return userMapper.toResponse(user);
     }
 
-    public Page<UserSummaryResponse> findAllUsers(int page, int size){
+    public Page<UserResponse> findAllUsers(int page, int size){
         Pageable pageable = PageRequest.of(page, size);
-        return userRepository.findAllActive(pageable).map(userMapper::toSummaryResponse);
+        return userRepository.findAllActive(pageable).map(userMapper::toResponse);
     }
 
-    public Page<UserSummaryResponse> findAllDeactivatedUsers(int page, int size){
+    public Page<UserResponse> findAllDeactivatedUsers(int page, int size){
         Pageable pageable = PageRequest.of(page, size);
-        return userRepository.findAllDeactivated(pageable).map(userMapper::toSummaryResponse);
+        return userRepository.findAllDeactivated(pageable).map(userMapper::toResponse);
     }
 
     @Transactional
@@ -110,11 +122,11 @@ public class UserService {
 
     @Transactional
     @CacheEvict(value = "users", allEntries = true)
-    public UserResponse updateProfilePicture(Long userId, MultipartFile image) throws IOException {
+    public UserResponse updateProfilePicture(MultipartFile image) throws IOException {
         if (image == null || image.isEmpty()) {
             throw new ImageNullException();
         }
-        User user = userRepository.findByIdWithRole(userId).orElseThrow(UserNotFoundException::new);
+        User user = authenticatedUserService.getCurrentUser();
         ImageUploadResult imageUploadResult = imageService.uploadImage(image.getBytes());
         user.setProfilePictureUrl(imageUploadResult.imageUrl());
         return userMapper.toResponse(userRepository.save(user));
