@@ -5,6 +5,8 @@ import com.example.Blink.url.dto.*;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.url.mapper.UrlMapper;
 import com.example.Blink.url.repository.UrlRepository;
+import com.example.Blink.user.dto.UserDashboardProjection;
+import com.example.Blink.user.entity.User;
 import com.example.Blink.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +32,6 @@ public class AdminUrlService {
         return urls.map(urlMapper::toResponse);
     }
 
-    // Get Url by id used urlservice method
-
     @Transactional
     public Page<UrlResponse> searchUrls(String keyword, int page, int size) {
 
@@ -40,8 +40,6 @@ public class AdminUrlService {
         return urlRepository.searchUrls(keyword, pageable)
                 .map(urlMapper::toResponse);
     }
-
-    //  toggleStatus use urlservice method
 
     @Transactional
     public Page<UrlResponse> getInactiveUrls(int page, int size) {
@@ -65,28 +63,24 @@ public class AdminUrlService {
 
     public AdminDashboardResponse getDashboard() {
 
-        AdminDashboardResponse response =
-                new AdminDashboardResponse();
+        UrlDashboardProjection urlStats =
+                urlRepository.getDashboardStatistics(Instant.now());
 
-        response.setTotalUsers(userRepository.count());
+        UserDashboardProjection userStats =
+                userRepository.getDashboardStatistics();
 
-        response.setTotalActiveUsers(userRepository.countByActiveTrue());
+        AdminDashboardResponse response = new AdminDashboardResponse();
 
-        response.setTotalDeActiveUsers(userRepository.countByActiveFalse());
+        response.setTotalUsers(userStats.getTotalUsers());
+        response.setTotalActiveUsers(userStats.getActiveUsers());
+        response.setTotalDeActiveUsers(userStats.getInactiveUsers());
+        response.setTotalNOtVerifiedUsers(userStats.getNotVerifiedUsers());
 
-        response.setTotalNOtVerifiedUsers(userRepository.countByActiveFalse());
-
-        response.setTotalUrls(urlRepository.count());
-
-        response.setActiveUrls(urlRepository.countByActiveTrue());
-
-        response.setInactiveUrls(urlRepository.countByActiveFalse());
-
-        response.setExpiredUrls(
-                urlRepository.countExpiredUrls(Instant.now()));
-
-        response.setTotalClicks(
-                urlRepository.sumClicks());
+        response.setTotalUrls(urlStats.getTotalUrls());
+        response.setActiveUrls(urlStats.getActiveUrls());
+        response.setInactiveUrls(urlStats.getInactiveUrls());
+        response.setExpiredUrls(urlStats.getExpiredUrls());
+        response.setTotalClicks(urlStats.getTotalClicks());
 
         return response;
     }
@@ -98,6 +92,14 @@ public class AdminUrlService {
 
         return urlRepository
                 .findAllByOrderByClickCountDesc(pageable)
+                .map(urlMapper::toResponse);
+    }
+
+    public Page<UrlResponse> getUserUrls(long userId, int page, int size) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        Pageable pageable = Pageable.ofSize(size).withPage(page);
+        return urlRepository.findAllByUser_UserId(user.getUserId(), pageable)
                 .map(urlMapper::toResponse);
     }
 }

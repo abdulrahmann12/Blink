@@ -1,6 +1,7 @@
 package com.example.Blink.user.repository;
 
 import com.example.Blink.role.entity.Role;
+import com.example.Blink.user.dto.UserDashboardProjection;
 import com.example.Blink.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -68,4 +69,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByActiveFalse();
 
     long countByVerifyFalse();
+
+    @Query("""
+SELECT
+    COUNT(u) AS totalUsers,
+    SUM(CASE WHEN u.active = true THEN 1 ELSE 0 END) AS activeUsers,
+    SUM(CASE WHEN u.active = false THEN 1 ELSE 0 END) AS inactiveUsers,
+    SUM(CASE WHEN u.verify = false THEN 1 ELSE 0 END) AS notVerifiedUsers
+FROM User u
+""")
+    UserDashboardProjection getDashboardStatistics();
 }

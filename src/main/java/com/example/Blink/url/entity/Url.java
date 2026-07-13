@@ -19,7 +19,10 @@ import java.util.UUID;
 @Table(name = "Urls",
         indexes = {
                 @Index(name = "idx_url_short_url", columnList = "short_url"),
-                @Index(name = "idx_url_custom_alias", columnList = "custom_alias")
+                @Index(name = "idx_url_custom_alias", columnList = "custom_alias"),
+                @Index(name = "idx_click_count", columnList = "click_count"),
+                @Index(name = "idx_expire_at", columnList = "expire_at"),
+                @Index(name = "idx_active", columnList = "active")
         }
 )
 @Data
@@ -40,8 +43,8 @@ public class Url {
 
     private String title;
 
-    @Column(unique = true, length = 7)
-    @Pattern(regexp = "^[A-Za-z0-9]{7}$")
+    @Column(unique = true, length = 40)
+    @Pattern(regexp = "^[A-Za-z0-9]{7,40}$")
     private String customAlias;
 
     private boolean passwordProtected;

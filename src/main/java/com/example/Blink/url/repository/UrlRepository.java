@@ -1,5 +1,6 @@
 package com.example.Blink.url.repository;
 
+import com.example.Blink.url.dto.UrlDashboardProjection;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.user.entity.User;
 import org.springframework.data.domain.Page;
@@ -115,4 +116,19 @@ AND u.expireAt < :now
     long countExpiredUrls(@Param("now") Instant now);
 
     Page<Url> findAllByOrderByClickCountDesc(Pageable pageable);
+
+    @Query("""
+SELECT
+    COUNT(u) AS totalUrls,
+    SUM(CASE WHEN u.active = true THEN 1 ELSE 0 END) AS activeUrls,
+    SUM(CASE WHEN u.active = false THEN 1 ELSE 0 END) AS inactiveUrls,
+    SUM(CASE
+            WHEN u.expireAt IS NOT NULL
+             AND u.expireAt < :now
+            THEN 1 ELSE 0
+        END) AS expiredUrls,
+    COALESCE(SUM(u.clickCount), 0) AS totalClicks
+FROM Url u
+""")
+    UrlDashboardProjection getDashboardStatistics(@Param("now") Instant now);
 }

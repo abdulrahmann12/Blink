@@ -66,4 +66,13 @@ public class AdminUrlController {
     public ResponseEntity<BaseResponse> getDashboard() {
         return ResponseEntity.ok(new BaseResponse(Messages.ADMIN_DASHBOARD_FETCHED, adminUrlService.getDashboard()));
     }
+
+    @Operation(summary = SwaggerMessages.GET_USER_URLS, description = SwaggerMessages.GET_USER_URLS_DESC)
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<BaseResponse> getUserUrls(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(new BaseResponse(Messages.URLS_FETCHED, adminUrlService.getUserUrls(userId,page, size)));
+    }
 }

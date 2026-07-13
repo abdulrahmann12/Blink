@@ -26,7 +26,7 @@ public class CreateUrlRequest {
     private String title;
 
     @Pattern(
-            regexp = "^$|^[A-Za-z0-9]{7}$",
+            regexp = "^$|^[A-Za-z0-9]{7,40}$",
             message = ValidationMessages.ALIAS_FORMAT_INVALID
     )
     private String customAlias;
