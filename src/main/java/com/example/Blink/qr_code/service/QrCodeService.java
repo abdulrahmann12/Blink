@@ -102,6 +102,7 @@ public class QrCodeService {
         try {
             qrCode = qrCodeRepository.save(QrCode.builder()
                     .url(url)
+                    .resource(url.getResource())
                     .imagePath(uploadResult.imageUrl())
                     .publicId(uploadResult.publicId())
                     .qrText(url.getShortUrl())
