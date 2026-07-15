@@ -1,8 +1,7 @@
 package com.example.Blink.resource.service;
 
-import com.example.Blink.exception.UrlExpiredException;
-import com.example.Blink.exception.UrlLockedException;
-import com.example.Blink.exception.UrlNotActiveException;
+import com.example.Blink.blocked_url.service.BlockedUrlService;
+import com.example.Blink.exception.*;
 import com.example.Blink.resource.dto.CreateResourceRequest;
 import com.example.Blink.resource.dto.ResourceResponse;
 import com.example.Blink.resource.dto.UpdateResourceRequest;
@@ -12,14 +11,15 @@ import com.example.Blink.resource.repository.ResourceRepository;
 import com.example.Blink.url_click.entity.SourceType;
 import com.example.Blink.url_click.service.UrlClickService;
 import com.example.Blink.user.entity.User;
-import com.example.Blink.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -30,9 +30,13 @@ public class ResourceService {
     private final ResourceMapper resourceMapper;
     private final PasswordEncoder passwordEncoder;
     private final UrlClickService urlClickService;
+    private final BlockedUrlService blockedUrlService;
+
 
     @Transactional
     public Resource createResource(CreateResourceRequest request, User user) {
+
+        validateResourceUrl(request.getDestinationUrl());
         Resource resource = resourceMapper.toEntity(request);
 
         resource.setUser(user);
@@ -92,5 +96,19 @@ public class ResourceService {
 
         urlClickService.trackClick(resource, SourceType.QR_CODE, request);
         return resource.getDestinationUrl();
+    }
+
+    public void validateResourceUrl(String url) {
+        if (blockedUrlService.isDomainBlocked(url)) {
+            throw new DomainAlreadyBlockedException();
+        }
+        try {
+            URI uri = URI.create(url);
+            if (!List.of("http", "https").contains(uri.getScheme().toLowerCase())) {
+                throw new InvalidUrlException();
+            }
+        } catch (Exception e) {
+            throw new InvalidUrlException();
+        }
     }
 }

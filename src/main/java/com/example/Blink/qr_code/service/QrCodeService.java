@@ -139,7 +139,7 @@ public class QrCodeService {
         QrCode qrCode = qrCodeRepository.findById(qrCodeId)
                 .orElseThrow(QrCodeNotFoundException::new);
 
-        if (!qrCode.getUrl().getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!qrCode.getResource().getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException();
         }
         imageService.deleteImage(qrCode.getPublicId());

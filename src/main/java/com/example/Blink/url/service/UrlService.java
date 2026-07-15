@@ -56,23 +56,9 @@ public class UrlService {
     @Transactional
     @CacheEvict(value = "urls", allEntries = true)
     public UrlResponse generateShortUrl(@Valid CreateUrlRequest request){
+        resourceService.validateResourceUrl(request.getOriginalUrl());
 
-        if(blockedUrlService.isDomainBlocked(request.getOriginalUrl())) {
-            throw new DomainAlreadyBlockedException();
-        }
         User currentUser = authenticatedUserService.getCurrentUser();
-
-        try {
-            URI uri = URI.create(request.getOriginalUrl());
-
-            if (!List.of("http", "https")
-                    .contains(uri.getScheme().toLowerCase())) {
-                throw new InvalidUrlException();
-            }
-
-        } catch (Exception e) {
-            throw new InvalidUrlException();
-        }
 
         String alias = (request.getCustomAlias() != null && !request.getCustomAlias().isBlank())
                 ? request.getCustomAlias().trim()

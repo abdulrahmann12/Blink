@@ -1,5 +1,6 @@
 package com.example.Blink.url_click.service;
 
+import com.example.Blink.exception.ResourceNotFoundException;
 import com.example.Blink.exception.UnauthorizedException;
 import com.example.Blink.exception.UrlNotFoundException;
 import com.example.Blink.resource.entity.Resource;
@@ -21,7 +22,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -89,11 +89,11 @@ public class UrlClickService {
     @EventListener
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "resourceClicks", allEntries = true),
-            @CacheEvict(value = "totalClicks", allEntries = true),
-            @CacheEvict(value = "clicksByDate", allEntries = true),
-            @CacheEvict(value = "topCountries", allEntries = true),
-            @CacheEvict(value = "topBrowsers", allEntries = true)
+            @CacheEvict(value = "resourceClicks", key = "#event.resourceId()"),
+            @CacheEvict(value = "totalClicks", key = "#event.resourceId()"),
+            @CacheEvict(value = "topCountries", key = "#event.resourceId()"),
+            @CacheEvict(value = "topBrowsers", key = "#event.resourceId()"),
+            @CacheEvict(value = "clicksByDate", key = "#event.resourceId() + '-' + T(java.time.LocalDate).now(T(java.time.ZoneOffset).UTC).atStartOfDay(T(java.time.ZoneOffset).UTC).toInstant().toEpochMilli()")
     })
     public void handleClickTrackingEvent(ClickTrackingEvent event) {
         try {
@@ -113,8 +113,9 @@ public class UrlClickService {
 
             resourceClickRepository.save(click);
 
-            resource.setClickCount(resource.getClickCount() + 1);
-            resourceRepository.save(resource);
+            // الزيادة الآمنة (Atomic Update) لحل الـ Race Condition
+            resourceRepository.incrementClickCount(event.resourceId());
+
         } catch (Exception e) {
             log.error("Failed to track click for URL {}: {}", event.resourceId(), e.getMessage());
         }
@@ -169,7 +170,7 @@ public class UrlClickService {
 
         String browser = "Unknown";
         String os = "Unknown";
-        DeviceType deviceType = DeviceType.UNKNOWN;
+        DeviceType deviceType;
 
         // Browser — order matters! Edge & Opera UAs contain "Chrome", so check them first
         if (userAgent.contains("Edg")) browser = "Edge";
@@ -210,10 +211,11 @@ public class UrlClickService {
         return sanitized;
     }
 
-    @Cacheable(value = "totalClicks", key = "#p0")
+// ========================= Statistics Queries =========================
+
     public Long totalClick(UUID resourceId) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+        Resource resource = resourceRepository.findByIdWithUser(resourceId)
+                .orElseThrow(ResourceNotFoundException::new);
 
         User currentUser = authenticatedUserService.getCurrentUser();
         if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -222,10 +224,9 @@ public class UrlClickService {
         return resourceClickRepository.countByResource_ResourceId(resourceId);
     }
 
-    @Cacheable(value = "clicksByDate", key = "#resourceId + '-' + #date")
     public Long clickPerDay(UUID resourceId, LocalDate date) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+        Resource resource = resourceRepository.findByIdWithUser(resourceId)
+                .orElseThrow(ResourceNotFoundException::new);
 
         User currentUser = authenticatedUserService.getCurrentUser();
         if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -236,10 +237,9 @@ public class UrlClickService {
         return resourceClickRepository.countByResource_ResourceIdAndVisitedAtBetween(resourceId, startOfDay, endOfDay);
     }
 
-    @Cacheable(value = "topCountries", key = "#p0")
     public List<String> topCountries(UUID resourceId) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+        Resource resource = resourceRepository.findByIdWithUser(resourceId)
+                .orElseThrow(ResourceNotFoundException::new);
 
         User currentUser = authenticatedUserService.getCurrentUser();
         if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
@@ -248,10 +248,9 @@ public class UrlClickService {
         return resourceClickRepository.findTopCountriesByResource_ResourceId(resourceId);
     }
 
-    @Cacheable(value = "topBrowsers", key = "#p0")
     public List<String> topBrowsers(UUID resourceId) {
-        Resource resource = resourceRepository.findById(resourceId)
-                .orElseThrow(() -> new RuntimeException("Resource not found"));
+        Resource resource = resourceRepository.findByIdWithUser(resourceId)
+                .orElseThrow(ResourceNotFoundException::new);
 
         User currentUser = authenticatedUserService.getCurrentUser();
         if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
