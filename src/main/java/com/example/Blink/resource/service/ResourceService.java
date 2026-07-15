@@ -9,6 +9,8 @@ import com.example.Blink.resource.dto.UpdateResourceRequest;
 import com.example.Blink.resource.entity.Resource;
 import com.example.Blink.resource.mapper.ResourceMapper;
 import com.example.Blink.resource.repository.ResourceRepository;
+import com.example.Blink.url_click.entity.SourceType;
+import com.example.Blink.url_click.service.UrlClickService;
 import com.example.Blink.user.entity.User;
 import com.example.Blink.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +29,7 @@ public class ResourceService {
     private final ResourceRepository resourceRepository;
     private final ResourceMapper resourceMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UrlClickService urlClickService;
 
     @Transactional
     public Resource createResource(CreateResourceRequest request, User user) {
@@ -87,9 +90,7 @@ public class ResourceService {
             throw new UrlLockedException();
         }
 
-        resource.setClickCount(resource.getClickCount() + 1);
-        resourceRepository.save(resource);
-
+        urlClickService.trackClick(resource, SourceType.QR_CODE, request);
         return resource.getDestinationUrl();
     }
 }

@@ -2,16 +2,19 @@ package com.example.Blink.url_click.service;
 
 import com.example.Blink.exception.UnauthorizedException;
 import com.example.Blink.exception.UrlNotFoundException;
+import com.example.Blink.resource.entity.Resource;
+import com.example.Blink.resource.repository.ResourceRepository;
 import com.example.Blink.security.AuthenticatedUserService;
-import com.example.Blink.url.entity.Url;
-import com.example.Blink.url.repository.UrlRepository;
-import com.example.Blink.url_click.dto.UrlClickResponse;
+
+import com.example.Blink.url_click.dto.ResourceClickResponse;
 import com.example.Blink.url_click.entity.DeviceType;
-import com.example.Blink.url_click.entity.UrlClick;
-import com.example.Blink.url_click.mapper.UrlClickMapper;
+import com.example.Blink.url_click.entity.ResourceClick;
+import com.example.Blink.url_click.entity.SourceType;
+import com.example.Blink.url_click.mapper.ResourceClickMapper;
+
 import com.example.Blink.url_click.model.ClickTrackingEvent;
 import com.example.Blink.url_click.model.UserAgentData;
-import com.example.Blink.url_click.repository.UrlClickRepository;
+import com.example.Blink.url_click.repository.ResourceClickRepository;
 import com.example.Blink.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
@@ -43,9 +46,9 @@ import org.springframework.data.domain.Pageable;
 @Slf4j
 public class UrlClickService {
 
-    private final UrlClickRepository urlClickRepository;
-    private final UrlClickMapper urlClickMapper;
-    private final UrlRepository urlRepository;
+    private final ResourceClickRepository resourceClickRepository;
+    private final ResourceRepository resourceRepository;
+    private final ResourceClickMapper resourceClickMapper;
     private final AuthenticatedUserService authenticatedUserService;
     private final ApplicationEventPublisher eventPublisher;
     private final GeoIpService geoIpService;
@@ -66,7 +69,7 @@ public class UrlClickService {
      * This ensures HttpServletRequest data is read on the request thread,
      * while the DB write happens asynchronously without blocking the redirect.
      */
-    public void trackClick(Url url, HttpServletRequest request) {
+    public void trackClick(Resource resource, SourceType sourceType, HttpServletRequest request) {
         String ip = extractClientIp(request);
         String userAgent = request.getHeader("User-Agent");
         String referrer = sanitizeReferrer(request.getHeader("Referer"));
@@ -75,10 +78,10 @@ public class UrlClickService {
 
         try {
             eventPublisher.publishEvent(
-                    new ClickTrackingEvent(url.getUrlId(), ip, ua, referrer)
+                    new ClickTrackingEvent(resource.getResourceId(), ip, ua, referrer,sourceType)
             );
         } catch (Exception e) {
-            log.warn("Click tracking skipped for URL {}: {}", url.getUrlId(), e.getMessage());
+            log.warn("Click tracking skipped for URL {}: {}", resource.getResourceId(), e.getMessage());
         }
     }
 
@@ -86,7 +89,7 @@ public class UrlClickService {
     @EventListener
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "urlClicks", allEntries = true),
+            @CacheEvict(value = "resourceClicks", allEntries = true),
             @CacheEvict(value = "totalClicks", allEntries = true),
             @CacheEvict(value = "clicksByDate", allEntries = true),
             @CacheEvict(value = "topCountries", allEntries = true),
@@ -94,41 +97,43 @@ public class UrlClickService {
     })
     public void handleClickTrackingEvent(ClickTrackingEvent event) {
         try {
-            Url url = urlRepository.getReferenceById(event.urlId());
+            Resource resource = resourceRepository.getReferenceById(event.resourceId());
 
-            UrlClick click = UrlClick.builder()
-                    .url(url)
+            ResourceClick click = ResourceClick.builder()
+                    .resource(resource)
                     .ipAddress(event.ip())
                     .browser(event.userAgentData().browser())
                     .operatingSystem(event.userAgentData().os())
                     .deviceType(event.userAgentData().deviceType())
                     .country(geoIpService.getCountry(event.ip()))
+                    .sourceType(event.sourceType())
                     .referrer(event.referrer())
                     .visitedAt(Instant.now())
                     .build();
 
-            urlClickRepository.save(click);
+            resourceClickRepository.save(click);
 
-            urlRepository.incrementClickCount(url.getUrlId());
+            resource.setClickCount(resource.getClickCount() + 1);
+            resourceRepository.save(resource);
         } catch (Exception e) {
-            log.error("Failed to track click for URL {}: {}", event.urlId(), e.getMessage());
+            log.error("Failed to track click for URL {}: {}", event.resourceId(), e.getMessage());
         }
     }
 
     // ========================= Query =========================
 
-    public Page<UrlClickResponse> getClicksByUrlId(UUID urlId, int page, int size) {
-        Url url = urlRepository.findById(urlId)
+    public Page<ResourceClickResponse> getClicksByUrlId(UUID resourceId, int page, int size) {
+        Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(UrlNotFoundException::new);
 
         User currentUser = authenticatedUserService.getCurrentUser();
-        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException();
         }
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<UrlClick> clicks = urlClickRepository.findByUrl_UrlId(urlId, pageable);
-        return clicks.map(urlClickMapper::toUrlClickResponse);
+        Page<ResourceClick> clicks = resourceClickRepository.findByResource_ResourceId(resourceId, pageable);
+        return clicks.map(resourceClickMapper::toResourceClickResponse);
     }
 
     // ========================= IP Extraction =========================
@@ -206,54 +211,52 @@ public class UrlClickService {
     }
 
     @Cacheable(value = "totalClicks", key = "#p0")
-    public Long totalClick(UUID urlId) {
-        Url url = urlRepository.findById(urlId)
-                .orElseThrow(UrlNotFoundException::new);
+    public Long totalClick(UUID resourceId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
 
         User currentUser = authenticatedUserService.getCurrentUser();
-        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException();
         }
-        return urlClickRepository.countByUrl_UrlId(urlId);
+        return resourceClickRepository.countByResource_ResourceId(resourceId);
     }
 
-    @Cacheable(value = "clicksByDate", key = "#urlId + '-' + #date")
-    public Long clickPerDay(UUID urlId, LocalDate date) {
-        Url url = urlRepository.findById(urlId)
-                .orElseThrow(UrlNotFoundException::new);
+    @Cacheable(value = "clicksByDate", key = "#resourceId + '-' + #date")
+    public Long clickPerDay(UUID resourceId, LocalDate date) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
 
         User currentUser = authenticatedUserService.getCurrentUser();
-        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException();
         }
         Instant startOfDay = date.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant endOfDay = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
-        return urlClickRepository.countByUrl_UrlIdAndVisitedAtBetween(urlId, startOfDay, endOfDay);
+        return resourceClickRepository.countByResource_ResourceIdAndVisitedAtBetween(resourceId, startOfDay, endOfDay);
     }
 
     @Cacheable(value = "topCountries", key = "#p0")
-    public List<String> topCountries(UUID urlId) {
-        Url url = urlRepository.findById(urlId)
-                .orElseThrow(UrlNotFoundException::new);
+    public List<String> topCountries(UUID resourceId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
 
         User currentUser = authenticatedUserService.getCurrentUser();
-        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException();
         }
-        return urlClickRepository.findTopCountriesByUrlId(urlId);
+        return resourceClickRepository.findTopCountriesByResource_ResourceId(resourceId);
     }
 
     @Cacheable(value = "topBrowsers", key = "#p0")
-    public List<String> topBrowsers(UUID urlId) {
-        Url url = urlRepository.findById(urlId)
-                .orElseThrow(UrlNotFoundException::new);
+    public List<String> topBrowsers(UUID resourceId) {
+        Resource resource = resourceRepository.findById(resourceId)
+                .orElseThrow(() -> new RuntimeException("Resource not found"));
 
         User currentUser = authenticatedUserService.getCurrentUser();
-        if (!url.getUser().getUserId().equals(currentUser.getUserId())) {
+        if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnauthorizedException();
         }
-        // Implement a method in UrlClickRepository to get top browsers by URL ID
-        return urlClickRepository.findTopBrowsersByUrlId(urlId);
+        return resourceClickRepository.findTopBrowsersByResource_ResourceId(resourceId);
     }
-
 }

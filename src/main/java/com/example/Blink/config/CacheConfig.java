@@ -26,6 +26,7 @@ public class CacheConfig {
                 // ── MEDIUM volatility: normal TTL ──
                 buildCache("users",          10, TimeUnit.MINUTES, 5_000),
                 buildCache("urls",           10, TimeUnit.MINUTES, 10_000),
+                buildCache("resources",           10, TimeUnit.MINUTES, 10_000),
                 buildCache("qrCodes",10, TimeUnit.MINUTES, 10_000),
 
                 // ── SHORT TTL: high-frequency lookups that must stay fresh ──
@@ -37,8 +38,8 @@ public class CacheConfig {
                 buildCache("clicksByDate",    5, TimeUnit.MINUTES, 50_000),
                 buildCache("topCountries",    5, TimeUnit.MINUTES, 10_000),
                 buildCache("topBrowsers",     5, TimeUnit.MINUTES, 10_000),
-                buildCache("urlClicks",       2, TimeUnit.MINUTES, 5_000)
-
+                buildCache("urlClicks",       2, TimeUnit.MINUTES, 5_000),
+                buildCache("resourceClicks",       2, TimeUnit.MINUTES, 5_000)
         ));
         return manager;
     }

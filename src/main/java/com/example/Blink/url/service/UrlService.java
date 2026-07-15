@@ -11,6 +11,7 @@ import com.example.Blink.url.dto.*;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.url.mapper.UrlMapper;
 import com.example.Blink.url.repository.UrlRepository;
+import com.example.Blink.url_click.entity.SourceType;
 import com.example.Blink.url_click.service.UrlClickService;
 import com.example.Blink.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -184,7 +185,7 @@ public class UrlService {
         if (url.isPasswordProtected()) {
             throw new UrlLockedException();
         }
-        urlClickService.trackClick(url, request);
+        urlClickService.trackClick(url.getResource(), SourceType.SHORT_LINK, request);
 
         return url.getOriginalUrl();
     }
@@ -201,7 +202,7 @@ public class UrlService {
         }
 
         urlRepository.incrementClickCount(url.getUrlId());
-        urlClickService.trackClick(url, request);
+        urlClickService.trackClick(url.getResource(), SourceType.SHORT_LINK, request);
 
         return url.getOriginalUrl();
     }
