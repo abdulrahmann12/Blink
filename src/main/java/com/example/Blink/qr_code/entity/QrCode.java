@@ -1,5 +1,6 @@
 package com.example.Blink.qr_code.entity;
 
+import com.example.Blink.resource.entity.Resource;
 import com.example.Blink.url.entity.Url;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,11 +23,18 @@ public class QrCode {
     private UUID qrId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "url_id", nullable = false, unique = true)
+    @JoinColumn(name = "url_id", nullable = true, unique = true)
     private Url url;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resource_id")
+    private Resource resource;
 
     @Column(nullable = false)
     private String imagePath;
+
+    @Builder.Default
+    private boolean active = true;
 
     private String qrText;
 

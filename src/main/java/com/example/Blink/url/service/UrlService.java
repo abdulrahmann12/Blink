@@ -3,11 +3,11 @@ package com.example.Blink.url.service;
 import com.example.Blink.blocked_url.service.BlockedUrlService;
 import com.example.Blink.common.dto.ChangePasswordRequest;
 import com.example.Blink.exception.*;
+import com.example.Blink.resource.dto.CreateResourceRequest;
+import com.example.Blink.resource.entity.Resource;
+import com.example.Blink.resource.service.ResourceService;
 import com.example.Blink.security.AuthenticatedUserService;
-import com.example.Blink.url.dto.CreateUrlRequest;
-import com.example.Blink.url.dto.DashboardResponse;
-import com.example.Blink.url.dto.UpdateUrlRequest;
-import com.example.Blink.url.dto.UrlResponse;
+import com.example.Blink.url.dto.*;
 import com.example.Blink.url.entity.Url;
 import com.example.Blink.url.mapper.UrlMapper;
 import com.example.Blink.url.repository.UrlRepository;
@@ -44,6 +44,7 @@ public class UrlService {
     private final AuthenticatedUserService authenticatedUserService;
     private final UrlClickService urlClickService;
     private final BlockedUrlService blockedUrlService;
+    private final ResourceService resourceService;
 
     private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int SHORT_CODE_LENGTH = 7;
@@ -80,8 +81,17 @@ public class UrlService {
             throw new AliasAlreadyUsed();
         }
 
+        CreateResourceRequest resourceRequest = new CreateResourceRequest();
+        resourceRequest.setDestinationUrl(request.getOriginalUrl());
+        resourceRequest.setTitle(request.getTitle());
+        resourceRequest.setPassword(request.getPassword());
+        resourceRequest.setExpireAt(request.getExpireAt());
+
+        Resource resource = resourceService.createResource(resourceRequest, currentUser);
+
         Url url = urlMapper.toEntity(request);
         url.setCustomAlias(alias);
+        url.setResource(resource);
 
         if(request.getPassword() != null && !request.getPassword().isBlank()){
             url.setPasswordProtected(true);
@@ -95,6 +105,51 @@ public class UrlService {
         Url savedUrl = urlRepository.save(url);
         return urlMapper.toResponse(savedUrl);
 
+    }
+
+
+    @Transactional
+    @CacheEvict(value = "urls", allEntries = true)
+    public UrlResponse assignShortUrlToResource(UUID resourceId, AssignShortUrlRequest request) {
+
+        User currentUser = authenticatedUserService.getCurrentUser();
+
+        Resource resource = resourceService.getResourceById(resourceId);
+
+        if (!resource.getUser().getUserId().equals(currentUser.getUserId())) {
+            throw new UnauthorizedException();
+        }
+
+        if (urlRepository.existsByResource_ResourceId(resourceId)) {
+            throw new ResourceAlreadyExistsException();
+        }
+
+        String alias = (request.getCustomAlias() != null && !request.getCustomAlias().isBlank())
+                ? request.getCustomAlias().trim()
+                : null;
+
+        if (alias != null && urlRepository.existsByCustomAlias(alias)) {
+            throw new AliasAlreadyUsed();
+        }
+
+        String code = (alias != null) ? alias : generateUniqueShortCode();
+
+        Url url = new Url();
+        url.setOriginalUrl(resource.getDestinationUrl());
+        url.setShortUrl(baseUrl + code);
+        url.setCustomAlias(alias);
+        url.setUser(currentUser);
+        url.setResource(resource);
+        url.setActive(true);
+
+        if (resource.isPasswordProtected()) {
+            url.setPasswordProtected(true);
+            url.setPasswordHash(resource.getPasswordHash());
+        }
+        url.setExpireAt(resource.getExpireAt());
+
+        Url savedUrl = urlRepository.save(url);
+        return urlMapper.toResponse(savedUrl);
     }
 
     private String generateUniqueShortCode() {

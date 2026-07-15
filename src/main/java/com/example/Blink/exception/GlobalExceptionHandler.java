@@ -111,6 +111,8 @@ public class GlobalExceptionHandler {
             BlockedUrlNotFoundException.class,
             DomainNotInBlockedListException.class,
             UserNotVerifyException.class,
+            ResourceNotFoundException.class,
+
     })
     public ResponseEntity<BaseResponse> handleNotFoundBusinessExceptions(Exception ex, WebRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
@@ -126,6 +128,8 @@ public class GlobalExceptionHandler {
             DomainAlreadyBlockedException.class,
             AccountAlreadyVerifiedException.class,
             VerificationCodeAlreadySentException.class,
+            ResourceAlreadyExistsException.class,
+
 
     })
     public ResponseEntity<BaseResponse> handleConflictExceptions(Exception ex, WebRequest request) {

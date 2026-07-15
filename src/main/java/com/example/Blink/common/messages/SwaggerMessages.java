@@ -34,6 +34,13 @@ public class SwaggerMessages {
     public static final String TAG_URL = "URL";
     public static final String TAG_URL_DESC = "Endpoints for creating, redirecting, and managing short URLs";
 
+    //========================= Resources =========================
+
+    public static final String TAG_SCAN = "QR Scan";
+    public static final String TAG_SCAN_DESC = "Public endpoints for scanning and redirecting Dynamic QR Codes";
+    public static final String SCAN_QR_CODE = "Scan Dynamic QR Code";
+    public static final String SCAN_QR_CODE_DESC = "Resolves the QR Code resource and redirects the user to the original destination URL";
+
     //========================= Endpoints =========================
 
     public static final String CREATE_SHORT_URL = "Create Short URL";
@@ -71,6 +78,9 @@ public class SwaggerMessages {
 
     public static final String CHANGE_URL_PASSWORD = "Change URL Password";
     public static final String CHANGE_URL_PASSWORD_DESC = "Changes the password of a password-protected URL owned by the authenticated user";
+
+    public static final String ASSIGN_SHORT_URL = "Assign Short URL to Resource";
+    public static final String ASSIGN_SHORT_URL_DESC = "Generates and assigns a new short URL to an existing resource (e.g., a standalone QR code) using its resource ID.";
 
     //========================= Admin URL Tag =========================
 
@@ -183,6 +193,9 @@ public class SwaggerMessages {
 
     public static final String GENERATE_QR_CODE = "Generate QR Code";
     public static final String GENERATE_QR_CODE_DESC = "Generates a QR code image for the specified URL ID";
+
+    public static final String CREATE_QR_CODE = "Create Dynamic QR Code";
+    public static final String CREATE_QR_CODE_DESC = "Generates a standalone dynamic QR code without requiring a short URL";
 
     public static final String GET_QR_CODE = "Get QR Code";
     public static final String GET_QR_CODE_DESC = "Retrieves the QR code associated with the specified URL ID";

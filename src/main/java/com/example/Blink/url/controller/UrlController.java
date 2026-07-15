@@ -4,6 +4,7 @@ import com.example.Blink.common.dto.BaseResponse;
 import com.example.Blink.common.dto.ChangePasswordRequest;
 import com.example.Blink.common.messages.Messages;
 import com.example.Blink.common.messages.SwaggerMessages;
+import com.example.Blink.url.dto.AssignShortUrlRequest;
 import com.example.Blink.url.dto.CreateUrlRequest;
 import com.example.Blink.url.dto.UpdateUrlRequest;
 import com.example.Blink.url.dto.UrlPasswordRequest;
@@ -131,5 +132,17 @@ public class UrlController {
             @Valid @RequestBody ChangePasswordRequest request) {
         urlService.changePassword(urlId, request);
         return ResponseEntity.ok(new BaseResponse(Messages.PASSWORD_CHANGED, null));
+    }
+
+    @Operation(summary = SwaggerMessages.ASSIGN_SHORT_URL, description = SwaggerMessages.ASSIGN_SHORT_URL_DESC)
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/resource/{resourceId}")
+    public ResponseEntity<BaseResponse> assignShortUrlToResource(
+            @PathVariable UUID resourceId,
+            @Valid @RequestBody AssignShortUrlRequest request) {
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new BaseResponse(Messages.SHORT_URL_ASSIGNED,
+                        urlService.assignShortUrlToResource(resourceId, request)));
     }
 }

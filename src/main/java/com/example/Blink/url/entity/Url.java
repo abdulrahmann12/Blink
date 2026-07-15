@@ -1,5 +1,6 @@
 package com.example.Blink.url.entity;
 
+import com.example.Blink.resource.entity.Resource;
 import com.example.Blink.url_click.entity.UrlClick;
 import com.example.Blink.user.entity.User;
 import jakarta.persistence.*;
@@ -57,6 +58,10 @@ public class Url {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resource_id")
+    private Resource resource;
 
     private boolean active;
 

@@ -31,6 +31,7 @@ public class Messages {
     public static final String PASSWORD_CHANGED = "Password changed successfully";
     public static final String SHORT_CODE_EXHAUSTED = "All possible short codes have been exhausted. Please try again later.";
 
+    public static final String SHORT_URL_ASSIGNED = "Short URL successfully assigned to the resource";
     public static final String ADMIN_URLS_FETCHED = "All URLs retrieved successfully";
     public static final String ADMIN_DASHBOARD_FETCHED = "Admin dashboard data retrieved successfully";
 
@@ -60,6 +61,16 @@ public class Messages {
     public static final String ROLE_DELETED = "Role deleted successfully";
     public static final String ROLE_FETCHED = "Role retrieved successfully";
     public static final String ROLES_FETCHED = "Roles retrieved successfully";
+
+    //========================= Resources =========================
+
+    public static final String RESOURCE_CREATED = "Resource created successfully";
+    public static final String RESOURCE_UPDATED = "Resource updated successfully";
+    public static final String RESOURCE_DELETED = "Resource deleted successfully";
+    public static final String RESOURCE_FETCHED = "Resource retrieved successfully";
+    public static final String RESOURCES_FETCHED = "Resources retrieved successfully";
+    public static final String RESOURCE_NOT_FOUND = "Resource not found";
+    public static final String RESOURCE_ALREADY_EXISTS = "Resource already exists";
 
     //========================= Auth =========================
 

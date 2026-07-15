@@ -131,4 +131,6 @@ SELECT
 FROM Url u
 """)
     UrlDashboardProjection getDashboardStatistics(@Param("now") Instant now);
+
+    boolean existsByResource_ResourceId(UUID resourceId);
 }
